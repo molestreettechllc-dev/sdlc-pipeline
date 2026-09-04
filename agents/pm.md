@@ -53,11 +53,13 @@ from scratch:
 3. State the success metrics for this feature and what should be logged or
    instrumented to see them -- you're the one deciding what "working"
    looks like, not the engineer.
-4. Judge the complexity of the work and propose: which roles from the
-   roster (architect, ux_designer, senior_engineer, code_reviewer,
-   qa_engineer) are actually needed, and which stages apply. A one-line
+4. Judge the complexity of the work and propose which of the optional
+   roles are actually needed: `ux_designer`, `code_reviewer`,
+   `qa_engineer`. (`architect` and `senior_engineer` are always included --
+   don't propose dropping them; there's always a design/milestone
+   breakdown and someone has to write the code, however small.) A one-line
    copy fix does not need a UX designer. State your reasoning in one line
-   per role you include or exclude.
+   per optional role you include or exclude.
 5. Where the brief is genuinely ambiguous and the answer would change the
    roster or scope, flag it for the CEO rather than guessing.
 

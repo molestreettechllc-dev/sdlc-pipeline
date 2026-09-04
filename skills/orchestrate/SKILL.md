@@ -169,13 +169,22 @@ line after it.
    `artifact` field, mark it `done`, and print the `✓ ... -- <one-line
    result>` line.
 4. Special case, `sharpen_prd` only: the PM's artifact includes a proposed
-   roster and stage list. Set `roster` in state.json to the PM's proposed
-   roles. For every stage in `stage_plan` whose `role` is not in the new
-   roster (and is not itself a gate or the milestone loop), mark it
-   `skipped` instead of `pending`. If the PM proposed dropping the UX
-   stage, designer role never gets dispatched and `gate_designs` still
-   fires but reviews only whatever artifacts remain relevant -- state that
-   plainly in the gate summary rather than silently skipping the gate too.
+   roster and stage list. `architect` and `senior_engineer` are always in
+   the roster regardless of what the PM proposes -- `write_plan` is what
+   produces the milestone list the whole `milestone_loop` depends on, and
+   no code gets written without an engineer, so neither is optional. If
+   the PM's proposal omits either, keep it in the roster anyway and note
+   the override plainly in the gate summary (e.g. "PM proposed skipping
+   the architect; kept because milestones require one"). `ux_designer`,
+   `code_reviewer`, and `qa_engineer` are genuinely optional -- set
+   `roster` to `["architect", "senior_engineer"]` plus whichever of those
+   three the PM included. For every stage in `stage_plan` whose `role` is
+   not in the final roster (and is not itself a gate or the milestone
+   loop), mark it `skipped` instead of `pending`. If the PM proposed
+   dropping the UX stage, designer role never gets dispatched and
+   `gate_designs` still fires but reviews only whatever artifacts remain
+   relevant -- state that plainly in the gate summary rather than
+   silently skipping the gate too.
 
 ## Gates
 
@@ -210,30 +219,41 @@ matters most.
 
 1. If `items` is empty, populate it from the architect's milestone list
    (one item per milestone, in the architect's stated order), each with
-   `implement`/`code_review`/`qa_tirekick` sub-status blocks as shown in
-   the schema.
+   an `implement` sub-status block always, a `code_review` block only if
+   `code_reviewer` is in `roster` (otherwise omit it -- there is no round
+   cap or review to run), and a `qa_tirekick` block only if `qa_engineer`
+   is in `roster`. A milestone item with neither sub-block completes as
+   soon as `implement` finishes -- there is nothing else to gate it on.
 2. Work items in order. For the first item not `done`, run its sub-loop:
    - **implement**: dispatch `senior_engineer` with the milestone spec (and
      any open fast-follow tickets from a prior QA round, if this is a
      rework pass). On completion, mark `implement.status: "done"` for this
-     pass and set `code_review.status: "pending"`.
-   - **code_review**: dispatch `code_reviewer` with the current diff.
-     Increment `code_review.round`.
-     - No blocking findings: mark `code_review.status: "done"`, set
-       `qa_tirekick.status: "pending"`.
+     pass. If this item has a `code_review` block, set its status to
+     `"pending"` and continue to code_review below; otherwise, if it has a
+     `qa_tirekick` block, set that to `"pending"` instead; otherwise mark
+     the whole milestone item `done` and move to the next item (step 2).
+   - **code_review** (only if this item has this block): dispatch
+     `code_reviewer` with the current diff. Increment `code_review.round`.
+     - No blocking findings: mark `code_review.status: "done"`. If this
+       item has a `qa_tirekick` block, set it to `"pending"`; otherwise
+       mark the milestone item `done` and move to the next item.
      - Blocking findings, `round < max_rounds` (2): set `implement.status:
        "pending"`, increment `implement.rework_count`, loop back to
        implement with the findings as the fast-follow input.
      - Blocking findings, `round == max_rounds`: this is a rework-cap
        escalation (see below) -- do not loop again on your own.
-   - **qa_tirekick**: dispatch `qa_engineer` against the reviewed diff.
+   - **qa_tirekick** (only if this item has this block): dispatch
+     `qa_engineer` against the reviewed diff.
      - No bugs found: mark `qa_tirekick.status: "done"` and the whole
        milestone item `done`; move to the next item (step 2).
      - Bugs found, `implement.rework_count < max_rework_rounds` (run-level,
        default 3): file the fast-follow, increment
-       `implement.rework_count`, reset `code_review.round` to 0 (the fix
-       gets a fresh review, not a continuation of the old count), loop
-       back to implement with the fast-follow ticket as input.
+       `implement.rework_count`, and if this item has a `code_review`
+       block reset its `round` to 0 (the fix gets a fresh review, not a
+       continuation of the old count). Either way, loop back to implement
+       with the fast-follow ticket as input -- the fix goes through
+       implement first, then code_review (if present) before qa_tirekick
+       re-verifies.
      - Bugs found, `implement.rework_count == max_rework_rounds`: rework-cap
        escalation.
 3. Once every item is `done`, mark the `milestone_loop` stage `done` and
