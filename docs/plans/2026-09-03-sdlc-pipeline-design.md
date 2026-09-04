@@ -130,6 +130,28 @@ grounding, not approving two separate documents.
 `source.type` is `"prd_file"` or `"repo"`; `checkout_path` is set only for
 the repo case and stays `null` for a PRD-file run with no repo context.
 
+## Process manager and live logging
+
+The orchestrate skill *is* the process manager — there's no separate
+component. Its defining rule: **only a gate, a rework-cap escalation, or
+run completion stops the turn.** Every ordinary stage transition — a role
+finishing and handing its output to the next role, a code-review finding
+routing back to the engineer, a QA bug becoming a fast-follow ticket —
+happens automatically, in the same turn, with no CEO input. The CEO
+supplies feedback only at the five gates and at replan; everywhere else,
+subagents hand each other exactly what they need directly through the
+state file and artifact paths.
+
+Because a run can chain through many stages unattended, the chat must
+narrate it live, not just report a summary once it stops. Before
+dispatching any subagent, the orchestrator prints one line naming the
+stage and role about to run; after it completes, one line with the
+one-line result. Milestone loop iterations log every sub-stage and round
+(implement → code_review round N → qa_tirekick, and any rework it
+triggers), so a currently-open session reads as a live status feed of
+who's doing what — "the coder just started milestone 2", not silence
+until the next gate.
+
 ## Gates
 
 Every `type: "gate"` stage stops the turn and calls `AskUserQuestion` with:

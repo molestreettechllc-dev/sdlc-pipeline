@@ -608,11 +608,45 @@ git commit -m "Add orchestrate skill: state schema and stage catalog"
 4. After handling one stage, loop back to step 2 -- keep going in the same
    turn until you hit a gate, a `blocked` escalation, or completion. Do not
    stop after an ordinary role stage just because it finished; only gates
-   and escalations pause the run.
+   and escalations pause the run. This is the core autonomy rule: subagents
+   hand each other feedback (review findings, fast-follow tickets) directly
+   through state and artifacts, with no CEO round-trip in between.
+
+## Progress logging
+
+You are a process manager, and the CEO is watching this turn happen live
+-- print progress as you go, not just a summary once you stop. Every time
+you're about to do something in the loop above, print one line first;
+print one more when it finishes. Use this format:
+
+```
+▶ <stage_id> [role: <role>] -- starting
+✓ <stage_id> -- <one-line result>
+```
+
+For the milestone loop, include the milestone name and, for code_review,
+the round number, e.g.:
+
+```
+▶ milestone 2/4 "Add checkout API endpoint" > implement [role: senior_engineer] -- starting
+✓ milestone 2/4 > implement -- 3 tickets, all tests passing
+▶ milestone 2/4 > code_review round 1 [role: code_reviewer] -- starting
+✓ milestone 2/4 > code_review round 1 -- 2 blocking findings, back to implement
+▶ milestone 2/4 > implement (rework 1) [role: senior_engineer] -- starting
+✓ milestone 2/4 > implement (rework 1) -- addressed both findings
+▶ milestone 2/4 > code_review round 2 [role: code_reviewer] -- starting
+✓ milestone 2/4 > code_review round 2 -- approved
+▶ milestone 2/4 > qa_tirekick [role: qa_engineer] -- starting
+✓ milestone 2/4 > qa_tirekick -- clean, milestone done
+```
+
+A gate or escalation still prints its `▶`/pre-question line, but the
+`AskUserQuestion` itself is the stop -- don't print a redundant "waiting"
+line after it.
 
 ## Running a role stage
 
-1. Mark the stage `in_progress`.
+1. Mark the stage `in_progress`, print the stage's `▶ ... -- starting` line.
 2. Dispatch the matching subagent (same name as the stage's `role`) via the
    Agent tool. Give it: the stage instructions are already in its own
    agent file, so your dispatch prompt only needs to name which prior
@@ -625,7 +659,8 @@ git commit -m "Add orchestrate skill: state schema and stage catalog"
 3. On completion, write the subagent's output to
    `.sdlc/runs/<run-id>/artifacts/NN_<stage-id>.md` (NN = this stage's
    1-based position in execution order), record that path in the stage's
-   `artifact` field, and mark it `done`.
+   `artifact` field, mark it `done`, and print the `✓ ... -- <one-line
+   result>` line.
 4. Special case, `sharpen_prd` only: the PM's artifact includes a proposed
    roster and stage list. Set `roster` in state.json to the PM's proposed
    roles. For every stage in `stage_plan` whose `role` is not in the new
@@ -641,12 +676,13 @@ A gate always stops the turn once reached -- never dispatch a subagent and
 a gate resolution in the same loop iteration without the CEO's answer in
 between.
 
-1. Mark the gate `in_progress`.
+1. Mark the gate `in_progress`, print `▶ <gate_id> -- awaiting CEO review`.
 2. Summarize the artifact(s) that fed this gate (read them, don't assume
    you remember their content from earlier in a long session).
 3. Call `AskUserQuestion` with options: **Approve**, **Request changes**,
    **Simplify the pipeline**, **Reject/stop**.
-   - **Approve**: mark the gate `done`, continue the loop.
+   - **Approve**: mark the gate `done`, print `✓ <gate_id> -- approved`,
+     continue the loop.
    - **Request changes**: ask what needs to change, mark the stage(s) that
      produced the reviewed artifact(s) back to `pending`, re-dispatch that
      role with the CEO's feedback included in the prompt, then re-present
@@ -659,6 +695,11 @@ between.
      CEO's stated reason, report where things were left, and end the turn.
 
 ## Milestone loop
+
+Print the `▶`/`✓` lines from "Progress logging" above for every sub-stage
+and round below -- this loop is the part of a run most likely to chain
+several autonomous steps in a row, so it's the part where live logging
+matters most.
 
 1. If `items` is empty, populate it from the architect's milestone list
    (one item per milestone, in the architect's stated order), each with
@@ -706,9 +747,10 @@ on this same question if the CEO doesn't answer in this turn.
 **Step 2: Verify the file is well-formed markdown with matching sections**
 
 Run: `grep -c '^## ' skills/orchestrate/SKILL.md`
-Expected: `7` (Run state, Stage catalog, start, resume, Running a role
-stage, Gates, Milestone loop -- adjust only if you added/removed a
-heading; the count should match what you actually wrote)
+Expected: `9` (Run state, Stage catalog, start, resume, Progress logging,
+Running a role stage, Gates, Milestone loop, Rework-cap escalation --
+adjust only if you added or removed a heading; the count should match
+what you actually wrote)
 
 **Step 3: Commit**
 
