@@ -30,7 +30,8 @@ continuity with a prior turn.
 ```json
 {
   "run_id": "...", "project_phase": 1, "parent_run_id": null,
-  "source_prd": "path", "created_at": "...",
+  "source": {"type": "prd_file", "value": "path", "checkout_path": null},
+  "created_at": "...",
   "roster": ["pm", "architect", "ux_designer", "senior_engineer",
              "code_reviewer", "qa_engineer"],
   "stage_plan": [
@@ -99,6 +100,35 @@ lightweight for a trivial change) — no fixed complexity tiers. The proposed
 roster and stage list are part of the PM's artifact and ride into
 `GATE_plan` alongside the architect's plan, rather than getting their own
 gate.
+
+### Input modes: PRD file or repo link
+
+`start` accepts either a PRD/brief file, or a repo (a git URL, or a local
+path) with no brief at all. The two feed the same `sharpen_prd` stage
+differently:
+
+- **PRD given:** as already described — refine the brief that's there.
+- **Repo given, no PRD:** there's no intent to refine yet, only a codebase.
+  Before dispatching the PM, the orchestrator resolves the repo to a local
+  checkout — clone it (shallow) into
+  `.sdlc/runs/<run-id>/checkout/` if it's a URL, or use the given path
+  directly if it's already local — and records that path as
+  `source.checkout_path`. The PM then does read-only recon of the checkout
+  (structure, data models, existing UX flows, what the app currently does)
+  and drafts a PRD from scratch: a summary of the product's current
+  intent, plus an **expanded** vision that takes real liberties — proposed
+  improvements to the existing design and functionality, not just a
+  restatement of what's there. Every claim about *current* behavior must
+  cite a real file/path in the checkout; every *proposed* addition must be
+  clearly marked as new so the CEO gate isn't reviewing a document where
+  invented features read as already-existing ones.
+
+This still produces one artifact reviewed at `GATE_plan` — the CEO is
+approving "build this expanded product," with the current-state summary as
+grounding, not approving two separate documents.
+
+`source.type` is `"prd_file"` or `"repo"`; `checkout_path` is set only for
+the repo case and stays `null` for a PRD-file run with no repo context.
 
 ## Gates
 
