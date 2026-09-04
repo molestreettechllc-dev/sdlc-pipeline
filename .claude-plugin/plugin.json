@@ -1,0 +1,6 @@
+{
+  "name": "sdlc-pipeline",
+  "description": "Runs a dynamic-roster, multi-gate SDLC pipeline from a PRD: PM sharpens the brief and proposes the working group, architect designs and breaks work into milestones, UX designer specs the UI, senior engineer implements each milestone with review and QA loops, and the CEO approves at each major gate -- with the ability to replan the pipeline at any point.",
+  "version": "0.1.0",
+  "author": {"name": "derwin"}
+}

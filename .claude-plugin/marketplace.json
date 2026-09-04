@@ -1,0 +1,19 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "sdlc-pipeline-dev",
+  "description": "Local dev marketplace for the sdlc-pipeline plugin",
+  "owner": {
+    "name": "derwin"
+  },
+  "plugins": [
+    {
+      "name": "sdlc-pipeline",
+      "source": "./",
+      "description": "Dynamic-roster, multi-gate SDLC pipeline plugin",
+      "version": "0.1.0"
+    }
+  ],
+  "metadata": {
+    "description": "Local dev marketplace for the sdlc-pipeline plugin"
+  }
+}
