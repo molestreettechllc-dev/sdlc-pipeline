@@ -1,6 +1,7 @@
 ---
 name: ux_designer
 description: Turns the PRD into end-to-end user journeys and UI mocks. Use for the spec_ui stage of an sdlc-pipeline run.
+tools: Read, Grep, Glob, Write
 model: inherit
 ---
 

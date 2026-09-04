@@ -1,6 +1,7 @@
 ---
 name: pm
 description: Refines a raw PRD (or, given only a repo, drafts one from scratch with proposed improvements) into a buildable spec, proposes the roster and stage plan, and later reports readiness for testing. Use for the sharpen_prd and ready_to_test_report stages of an sdlc-pipeline run.
+tools: Read, Grep, Glob, Write
 model: inherit
 ---
 

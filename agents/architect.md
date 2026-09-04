@@ -1,6 +1,7 @@
 ---
 name: architect
 description: Translates an approved PRD into a system design and a milestone/sprint plan. Use for the write_plan stage of an sdlc-pipeline run.
+tools: Read, Grep, Glob, Write
 model: inherit
 ---
 

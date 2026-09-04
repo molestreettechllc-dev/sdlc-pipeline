@@ -59,9 +59,14 @@ like:
   "status": "pending",
   "implement": {"status": "pending", "rework_count": 0},
   "code_review": {"status": "pending", "round": 0, "max_rounds": 2},
-  "qa_tirekick": {"status": "pending"}
+  "qa_tirekick": {"status": "pending"},
+  "artifacts": []
 }
 ```
+
+`artifacts` accumulates paths as the milestone's sub-stages run (see
+"Milestone loop" below) -- every dispatch writes one, same as a role
+stage, so nothing a gate needs to summarize is ever un-persisted.
 
 `status` on any stage/item is one of: `pending`, `in_progress`, `done`,
 `blocked` (rework cap hit, waiting on the CEO), `skipped` (dropped by
@@ -210,12 +215,37 @@ between.
    - **Reject/stop**: mark `status: "stopped"` in state.json with the
      CEO's stated reason, report where things were left, and end the turn.
 
+### Special case: `gate_next_phase`
+
+This gate doesn't fit the four generic options above -- there's no
+artifact to approve or send back for changes, and "Approve" alone doesn't
+say whether the CEO wants a phase 2. Use a dedicated question instead:
+**Start next phase**, **End the run**.
+
+- **Start next phase**: ask the CEO for the phase-2 source (a new PRD path
+  or repo link, same as `start` accepts). Generate a new `run_id`, create
+  its `.sdlc/runs/<new-run-id>/` with a fresh `state.json` (full stage
+  catalog reset to `pending`, empty `roster`), set its `parent_run_id` to
+  this run's `run_id` and `project_phase` to this run's `project_phase +
+  1`. Mark this run's `gate_next_phase` `done` and this run's `status`
+  `"complete"`. Continue as `resume <new-run-id>` in the same turn --
+  phase 2 starts immediately, it does not wait for a separate `start`
+  call.
+- **End the run**: mark `gate_next_phase` `done` and `status: "complete"`.
+  Report the full run summary and stop.
+
 ## Milestone loop
 
 Print the `▶`/`✓` lines from "Progress logging" above for every sub-stage
 and round below -- this loop is the part of a run most likely to chain
 several autonomous steps in a row, so it's the part where live logging
-matters most.
+matters most. Every dispatch below also writes its output to
+`.sdlc/runs/<run-id>/artifacts/milestone-<index>_<substage>_round<N>.md`
+(1-based milestone index, `<N>` the round for `implement`/`code_review`,
+omitted for `qa_tirekick` since it doesn't repeat within one pass) and
+appends that path to the item's `artifacts` list -- the same rule role
+stages follow, so `gate_rollout` always has something real to read and
+summarize.
 
 1. If `items` is empty, populate it from the architect's milestone list
    (one item per milestone, in the architect's stated order), each with
@@ -269,6 +299,15 @@ manual round** (CEO gives specific direction, one extra round runs outside
 the normal cap), **Stop the run** (mark `status: "stopped"`). Mark the
 relevant sub-stage `blocked` before asking, so a fresh `resume` lands back
 on this same question if the CEO doesn't answer in this turn.
+
+A manual round runs exactly like an ordinary rework pass (dispatch
+`senior_engineer` with the CEO's direction as input, then back through
+`code_review`/`qa_tirekick` as normal for this item) but does not touch
+`round` or `rework_count` -- it's outside the cap, not a reset of it. If it
+still fails, you're back at this same escalation: summarize what the
+manual round changed and didn't fix, and ask again. There is no third
+option beyond these three; a manual round can be requested more than
+once, each one a fresh CEO decision, not an automatic retry.
 
 ## Replan
 

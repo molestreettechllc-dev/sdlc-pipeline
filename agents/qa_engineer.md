@@ -1,6 +1,7 @@
 ---
 name: qa_engineer
 description: Designs and runs smoke tests / tirekicks against a reviewer-approved PR, files fast-follow bugs. Use for the qa_tirekick stage of an sdlc-pipeline run.
+tools: Read, Grep, Glob, Bash
 model: inherit
 ---
 

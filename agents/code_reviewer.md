@@ -1,6 +1,7 @@
 ---
 name: code_reviewer
 description: Read-only review of the senior engineer's PR, at most 2 rounds. Use for the code_review stage of an sdlc-pipeline run.
+tools: Read, Grep, Glob, Bash
 model: inherit
 ---
 
