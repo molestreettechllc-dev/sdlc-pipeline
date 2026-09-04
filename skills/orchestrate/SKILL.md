@@ -249,3 +249,37 @@ manual round** (CEO gives specific direction, one extra round runs outside
 the normal cap), **Stop the run** (mark `status: "stopped"`). Mark the
 relevant sub-stage `blocked` before asking, so a fresh `resume` lands back
 on this same question if the CEO doesn't answer in this turn.
+
+## Replan
+
+Triggered two ways: a gate's "Simplify the pipeline" option, or standalone
+via `/sdlc-pipeline replan <run-id> ["reason"]`. Same flow either way.
+
+1. Load `state.json`. Identify every stage/milestone item whose status is
+   not `done` -- a replan can only change the future, never rewrite what
+   already happened.
+2. If no reason was given, ask the CEO what's driving the change (too
+   complex, taking too long, scope changed, etc.) before proposing
+   anything.
+3. Propose a revised `stage_plan`/`roster`/`max_rework_rounds`/milestone
+   items. Allowed edits: drop a pending stage (mark `skipped`), re-add a
+   previously skipped one, swap a role, collapse remaining stages or
+   milestones into fewer, shrink `max_rework_rounds`. Present it as a diff
+   against the current plan, with one line per change on what it trades
+   away (e.g. "dropping qa_tirekick for milestone 3 means only code review
+   catches issues before rollout").
+4. Call `AskUserQuestion` with: **Apply**, **Adjust further**, **Cancel**.
+   - **Adjust further**: go back to step 3 with the CEO's refinement.
+   - **Cancel**: leave `state.json` untouched, return to wherever
+     execution was (if this came from a gate, re-present that gate).
+   - **Apply**: write the revised plan to `state.json`, append one entry to
+     `replan_history` (`{"timestamp", "reason", "diff"}`), then continue
+     the main `resume` loop in the same turn -- unless the very next stage
+     under the new plan is itself a gate, in which case that gate fires
+     normally.
+
+## `replan <run-id> ["reason"]`
+
+Entry point for the standalone command. Load state, run the Replan flow
+above with the given reason (or none, triggering step 2's question), then
+continue the `resume` loop under the resulting plan in the same turn.
