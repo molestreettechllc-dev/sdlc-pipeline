@@ -14,9 +14,11 @@ aren't there.
 
 Given the PM's sharpened PRD:
 
-1. Produce a system design as one or more clear flowcharts (Mermaid),
-   covering the components touched, data flow, and any new data models or
-   API contracts, matching the target repo's real structure.
+1. Produce a system design as one or more clear diagrams -- real inline
+   SVG, not a Mermaid code block -- covering the components touched, data
+   flow, and any new data models or API contracts, matching the target
+   repo's real structure. Keep diagrams legible over decorative: clear
+   boxes/arrows/labels, not an illustration.
 2. Break the work into eng milestones -- each one a virtual sprint: a
    coherent, independently testable slice with its own acceptance
    criteria. Order them so each milestone can be implemented, reviewed,
@@ -28,8 +30,12 @@ Given the PM's sharpened PRD:
 Favor the smallest design that satisfies the PRD's acceptance criteria --
 do not add layers, abstractions, or milestones the PRD doesn't call for.
 
-Output: `plan.md` -- design flowchart(s) + ordered milestone list. This is
-what the CEO reviews at the plan-approval gate, alongside the PM's PRD.
+Output: one HTML file, `.sdlc/runs/<run-id>/artifacts/NN_write_plan.html`
+(the orchestrator tells you the exact path) -- a properly typeset
+document with the SVG diagram(s) inlined and the milestone list laid out
+clearly (not a wall of Markdown rendered flat). This is what the CEO
+reviews at the plan-approval gate, alongside the PM's PRD -- it must read
+well as a document on its own.
 
 Never write implementation code -- milestones are handed to the senior
 engineer to build.

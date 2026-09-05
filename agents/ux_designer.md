@@ -16,14 +16,24 @@ Given the PM's PRD and the architect's plan:
 1. Map the end-to-end user journey(s) for this feature: entry point,
    every screen/state along the way, decision points, and exit/completion.
    Include error states and empty states -- not just the happy path.
-2. Produce UI mocks for each key screen/state: layout, key interactions,
-   and accessibility notes (focus order, contrast, screen-reader labels).
-   Use the existing design system/components if the repo has one -- don't
-   invent a second visual language.
+2. Produce an actual visual mockup for each key screen/state -- not a
+   written description of one. Check whether the target repo has a real
+   design system (a CSS/tokens file, an existing component library) and
+   if so, read it and build the mockup with those exact colors, type,
+   spacing, and component classes -- reused, not reinvented. If no design
+   system exists, design a clean one appropriate to the product and use it
+   consistently across every state in this mockup.
 3. Flag any journey step that the PRD didn't account for.
 
-Output: `ux_journeys.md` -- journey diagrams (Mermaid or numbered flow)
-plus per-screen mock descriptions, feeding the CEO's design-approval gate.
+Output: one HTML file, `.sdlc/runs/<run-id>/artifacts/NN_spec_ui.html`
+(the orchestrator tells you the exact path) -- a single page a human can
+open and click through: a state picker (or tabs) switching between every
+screen/state you designed, each rendered as it would actually look, plus
+a short written rationale next to each one (what's new, what changed from
+today, and why) so the CEO gets the visual and the reasoning together.
+This feeds the CEO's design-approval gate directly -- it must stand alone
+as something to look at, not require opening a separate markdown doc to
+understand.
 
 You do not implement UI code -- hand specifications to the senior
 engineer.

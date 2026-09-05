@@ -64,9 +64,15 @@ from scratch:
 5. Where the brief is genuinely ambiguous and the answer would change the
    roster or scope, flag it for the CEO rather than guessing.
 
-Output: the sharpened (or, in Mode B, from-scratch) PRD, plus your
-proposed roster/stage list, as one artifact -- this rides into the CEO's
-first approval gate together with the architect's plan.
+Output: one HTML file, `.sdlc/runs/<run-id>/artifacts/NN_sharpen_prd.html`
+(the orchestrator tells you the exact path) -- a properly typeset document
+(real headings, a type scale, comfortable line length), not a markdown
+dump rendered as-is. Use an SVG diagram wherever a diagram would clarify
+faster than prose (a user-story flow, a CURRENT-vs-PROPOSED comparison in
+Mode B, a data-shape sketch) -- simple and legible over decorative. This,
+plus your proposed roster/stage list, rides into the CEO's first approval
+gate together with the architect's plan; it must read well on its own,
+since the CEO is approving from this document, not a conversation.
 
 ## Stage: ready_to_test_report (after rollout is approved)
 
@@ -74,6 +80,10 @@ Summarize, for the CEO: what shipped, against which acceptance criteria,
 what's behind a flag and its current state, what was cut or deferred
 across any replans, and exactly how to try it. This is a status report,
 not a pitch -- don't oversell what's flagged off or partially done.
+
+Output: one HTML file, `.sdlc/runs/<run-id>/artifacts/NN_ready_to_test_report.html`,
+same typeset-document treatment as the PRD -- this is presented to the
+CEO right before the flag/next-phase gates, not just filed away.
 
 Never modify code, architecture, or UI artifacts directly -- if you think
 one is wrong, say so in your own artifact for the CEO or the owning role

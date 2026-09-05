@@ -15,7 +15,10 @@ session with no memory of this one.
 
 Path: `<project-root>/.sdlc/runs/<run-id>/state.json`. Artifacts live in
 `<project-root>/.sdlc/runs/<run-id>/artifacts/`, named
-`NN_<stage-id>.md` in execution order.
+`NN_<stage-id>.md` in execution order -- except `sharpen_prd`, `write_plan`,
+`spec_ui`, and `ready_to_test_report`, which are always `.html`: anything
+the CEO is asked to approve is a presentation, not a markdown file
+rendered flat. See "Presenting an approval artifact" below.
 
 Schema:
 
@@ -27,6 +30,8 @@ Schema:
   "source": {"type": "prd_file", "value": "path/to/prd.md", "checkout_path": null},
   "created_at": "2026-09-03T12:00:00Z",
   "status": "in_progress",
+  "ui_mode": false,
+  "pending_gate": null,
   "roster": [],
   "stage_plan": [
     {"id": "sharpen_prd", "role": "pm", "status": "pending", "artifact": null},
@@ -49,6 +54,11 @@ Schema:
 `null`) or `"repo"` (value is the git URL or local path the CEO gave,
 `checkout_path` is where the orchestrator resolved it to on disk -- see
 "`start`" below).
+
+`ui_mode` (set by `start --with-ui`, default `false`) and `pending_gate`
+(default `null`) together let an external dashboard drive this run instead
+of a live terminal -- see "Posing a question to the CEO" below for what
+they mean and how `resume` handles them.
 
 Each milestone item, once populated (see the milestone loop below), looks
 like:
@@ -101,23 +111,33 @@ Gates fire at the macro level only: `gate_plan`, `gate_designs`,
      `checkout_path` to that path as given.
    - Set `source.checkout_path` accordingly.
 5. Write `state.json` from the schema above: `source` set per steps 1 and
-   4, `roster` empty, every stage `pending`, `status: "in_progress"`.
+   4, `roster` empty, every stage `pending`, `status: "in_progress"`,
+   `ui_mode: true` if `--with-ui` was given (default `false`),
+   `pending_gate: null`.
 6. Continue as `resume <run-id>` below, in the same turn.
 
-## `resume <run-id>`
+## `resume <run-id> [--answer "<text>"]`
 
 1. Load `.sdlc/runs/<run-id>/state.json`. If it doesn't exist, stop and
    tell the CEO the run-id wasn't found -- do not guess a path.
-2. Find the first stage in `stage_plan` (top to bottom, expanding
+2. If `pending_gate` is set (only possible when `ui_mode: true`), handle
+   it before anything else -- see "Posing a question to the CEO" for the
+   exact resolution logic. `--answer` not given: re-print
+   `pending_gate.summary` and stop, nothing else to do. `--answer` given
+   and it resolves: clear `pending_gate`, apply that option's branch logic,
+   and fall through to step 3 in the same turn. `--answer` given but
+   unresolved: leave `pending_gate` as is, print what couldn't be matched,
+   and stop.
+3. Find the first stage in `stage_plan` (top to bottom, expanding
    `milestone_loop` items in order) whose status is `pending`, `in_progress`,
    or `blocked`. If none, mark `status: "complete"` in state.json, report a
    summary of the whole run, and stop.
-3. Dispatch on that stage's type:
+4. Dispatch on that stage's type:
    - **role stage** (`sharpen_prd`, `write_plan`, `spec_ui`,
      `ready_to_test_report`): see "Running a role stage" below.
    - **gate**: see "Gates" below.
    - **milestone_loop**: see "Milestone loop" below.
-4. After handling one stage, loop back to step 2 -- keep going in the same
+5. After handling one stage, loop back to step 3 -- keep going in the same
    turn until you hit a gate, a `blocked` escalation, or completion. Do not
    stop after an ordinary role stage just because it finished; only gates
    and escalations pause the run. This is the core autonomy rule: subagents
@@ -152,9 +172,77 @@ the round number, e.g.:
 ✓ milestone 2/4 > qa_tirekick -- clean, milestone done
 ```
 
-A gate or escalation still prints its `▶`/pre-question line, but the
-`AskUserQuestion` itself is the stop -- don't print a redundant "waiting"
-line after it.
+A gate or escalation still prints its `▶`/pre-question line, but posing
+the question itself is the stop (see "Posing a question to the CEO" next)
+-- don't print a redundant "waiting" line after it.
+
+## Posing a question to the CEO
+
+Every gate, rework-cap escalation, and replan confirmation below poses a
+question with a fixed set of options plus, sometimes, free text. What the
+options are and what each one does is unchanged either way -- this section
+covers only *how* the question reaches the CEO, which depends on
+`ui_mode`.
+
+**`ui_mode: false` (default -- interactive terminal use):** call
+`AskUserQuestion` with the given options exactly as written at each call
+site. This is a live conversation: ask, get the answer, continue in the
+same turn.
+
+**`ui_mode: true` (`--with-ui`, driven by an external dashboard):** there
+is no live terminal to answer into -- the process running this turn is not
+the process that will supply the answer. Instead of calling
+`AskUserQuestion`:
+
+1. Write a `pending_gate` object to `state.json`:
+   ```json
+   {"id": "<gate/escalation/replan id>", "summary": ["line", "line", ...],
+    "options": ["Option A", "Option B", ...]}
+   ```
+   `summary` is the context you'd otherwise only speak aloud before
+   `AskUserQuestion` -- write it down in full, since the dashboard has no
+   other way to show the CEO what's being asked.
+2. Mark whatever stage/item this question blocks on `"blocked"`.
+3. Print the `▶ ... -- awaiting CEO review` line, then end the turn
+   immediately: no further tool calls, no summary line after. The next
+   turn (a `resume` with an answer) is what handles the reply.
+
+**Resolving a `pending_gate` on `resume` (`ui_mode: true` only):** covered
+in "`resume <run-id>`" step 2 above -- summarized here for completeness.
+Given `--answer "<text>"`, interpret it as the CEO's answer in their own
+words, exactly as you'd interpret a live reply to `AskUserQuestion`: map it
+to the closest matching option in `pending_gate.options`, and treat any
+remaining text as the free-form detail that option's own branch logic
+expects (a change request's specifics, a rejection's reason, a replan
+direction, manual-round guidance, whatever applies at that call site). If
+it genuinely doesn't map to any option, don't guess -- leave `pending_gate`
+untouched, print what couldn't be resolved, and stop so the CEO can
+re-answer. Once resolved, clear `pending_gate` to `null` and apply that
+option's branch logic exactly as documented at its own gate/escalation/
+replan section below.
+
+## Presenting an approval artifact
+
+`sharpen_prd`, `write_plan`, `spec_ui`, and `ready_to_test_report` produce
+an `.html` file, not markdown -- the whole point is that the CEO looks at
+something, not just reads a gate's text summary. Whenever one of these
+feeds a gate (in "Gates" below, and at `ready_to_test_report`'s own
+handoff into `gate_flag`), actually present it, in addition to the usual
+text summary:
+
+- **If the `Artifact` tool is available in this session** (it publishes
+  to a hosted, shareable link): publish the HTML file with it and share
+  the resulting link -- this is the preferred path, since the CEO can
+  click straight into a rendered page.
+- **If it isn't available** (a plain terminal/CLI session): tell the CEO
+  the exact file path and that it's an HTML file to open in a browser
+  (e.g. `open <path>` on macOS, or the equivalent for their platform) --
+  don't just paste its contents as text, that defeats the point of having
+  built a presentation.
+
+Either way, still write the text summary the gate/report calls for --
+`ui_mode: true` has no browser session watching, only `pending_gate.summary`,
+so the artifact link/path belongs in that summary too, not instead of it.
 
 ## Running a role stage
 
@@ -167,12 +255,15 @@ line after it.
    Read. Do not paste artifact contents into the dispatch prompt. For
    `sharpen_prd` specifically, also tell the PM which mode applies:
    `source.type` and, for a PRD file, its path; for a repo, its
-   `checkout_path` to recon.
-3. On completion, write the subagent's output to
-   `.sdlc/runs/<run-id>/artifacts/NN_<stage-id>.md` (NN = this stage's
-   1-based position in execution order), record that path in the stage's
-   `artifact` field, mark it `done`, and print the `✓ ... -- <one-line
-   result>` line.
+   `checkout_path` to recon. Tell every subagent the exact artifact path
+   to write to, per "Run state" above (`.html` for `sharpen_prd`,
+   `write_plan`, `spec_ui`, `ready_to_test_report`; `.md` otherwise).
+3. On completion, record that path in the stage's `artifact` field, mark
+   it `done`, and print the `✓ ... -- <one-line result>` line. If this
+   stage's artifact is one of the four `.html` ones, present it now per
+   "Presenting an approval artifact" above -- don't wait until the gate
+   that reviews it to surface the link, so the CEO has time to open it
+   before the question arrives.
 4. Special case, `sharpen_prd` only: the PM's artifact includes a proposed
    roster and stage list. `architect` and `senior_engineer` are always in
    the roster regardless of what the PM proposes -- `write_plan` is what
@@ -199,15 +290,24 @@ between.
 
 1. Mark the gate `in_progress`, print `▶ <gate_id> -- awaiting CEO review`.
 2. Summarize the artifact(s) that fed this gate (read them, don't assume
-   you remember their content from earlier in a long session).
-3. Call `AskUserQuestion` with options: **Approve**, **Request changes**,
-   **Simplify the pipeline**, **Reject/stop**.
+   you remember their content from earlier in a long session). If any of
+   them is one of the `.html` presentation artifacts and it wasn't already
+   surfaced when its stage finished (e.g. this is a fresh `resume` in a
+   new session), present it now per "Presenting an approval artifact"
+   before posing the question.
+3. Pose this to the CEO (see "Posing a question to the CEO") with options:
+   **Approve**, **Request changes**, **Simplify the pipeline**,
+   **Reject/stop**.
    - **Approve**: mark the gate `done`, print `✓ <gate_id> -- approved`,
      continue the loop.
-   - **Request changes**: ask what needs to change, mark the stage(s) that
-     produced the reviewed artifact(s) back to `pending`, re-dispatch that
-     role with the CEO's feedback included in the prompt, then re-present
-     this same gate once the new artifact is ready (still in this turn).
+   - **Request changes**: what needs to change is either the CEO's live
+     follow-up reply (`ui_mode: false`) or the free text after "Request
+     changes" in `--answer` (`ui_mode: true`) -- either way, mark the
+     stage(s) that produced the reviewed artifact(s) back to `pending`,
+     re-dispatch that role with the CEO's feedback included in the prompt,
+     then re-present this same gate once the new artifact is ready (still
+     in this turn; `ui_mode: true` re-presenting means writing a fresh
+     `pending_gate` and ending the turn again, same as the first time).
    - **Simplify the pipeline**: run the Replan flow (below) with this
      gate's context as the implicit reason if the CEO doesn't give one,
      then continue the loop under the revised plan. Do not re-ask this
@@ -219,14 +319,18 @@ between.
 
 This gate doesn't fit the four generic options above -- there's no
 artifact to approve or send back for changes, and "Approve" alone doesn't
-say whether the CEO wants a phase 2. Use a dedicated question instead:
+say whether the CEO wants a phase 2. Pose a dedicated question instead:
 **Start next phase**, **End the run**.
 
-- **Start next phase**: ask the CEO for the phase-2 source (a new PRD path
-  or repo link, same as `start` accepts). Generate a new `run_id`, create
+- **Start next phase**: the phase-2 source (a new PRD path or repo link,
+  same as `start` accepts) is either the CEO's live follow-up reply
+  (`ui_mode: false`) or the free text after "Start next phase" in
+  `--answer` (`ui_mode: true`). Generate a new `run_id`, create
   its `.sdlc/runs/<new-run-id>/` with a fresh `state.json` (full stage
-  catalog reset to `pending`, empty `roster`), set its `parent_run_id` to
-  this run's `run_id` and `project_phase` to this run's `project_phase +
+  catalog reset to `pending`, empty `roster`, `pending_gate: null`,
+  `ui_mode` copied from this run -- a UI-driven run's next phase is still
+  UI-driven), set its `parent_run_id` to this run's `run_id` and
+  `project_phase` to this run's `project_phase +
   1`. Mark this run's `gate_next_phase` `done` and this run's `status`
   `"complete"`. Continue as `resume <new-run-id>` in the same turn --
   phase 2 starts immediately, it does not wait for a separate `start`
@@ -291,14 +395,16 @@ summarize.
 
 ## Rework-cap escalation
 
-Stop the turn (do not auto-continue). Summarize what's stuck and why
-(which cap was hit, what the remaining findings/bugs are), and call
-`AskUserQuestion` with: **Approve anyway** (mark the blocking sub-stage
-`done` despite open findings -- record this in state.json), **One more
-manual round** (CEO gives specific direction, one extra round runs outside
-the normal cap), **Stop the run** (mark `status: "stopped"`). Mark the
-relevant sub-stage `blocked` before asking, so a fresh `resume` lands back
-on this same question if the CEO doesn't answer in this turn.
+Stop the turn (do not auto-continue). Mark the relevant sub-stage
+`blocked` first, so a fresh `resume` lands back on this same question no
+matter how the turn actually ended. Summarize what's stuck and why
+(which cap was hit, what the remaining findings/bugs are),
+then pose this to the CEO (see "Posing a question to the CEO") with:
+**Approve anyway** (mark the blocking sub-stage `done` despite open
+findings -- record this in state.json), **One more manual round** (CEO
+gives specific direction -- their live follow-up reply, or the free text
+after "One more manual round" in `--answer` -- one extra round runs
+outside the normal cap), **Stop the run** (mark `status: "stopped"`).
 
 A manual round runs exactly like an ordinary rework pass (dispatch
 `senior_engineer` with the CEO's direction as input, then back through
@@ -317,9 +423,13 @@ via `/sdlc-pipeline replan <run-id> ["reason"]`. Same flow either way.
 1. Load `state.json`. Identify every stage/milestone item whose status is
    not `done` -- a replan can only change the future, never rewrite what
    already happened.
-2. If no reason was given, ask the CEO what's driving the change (too
-   complex, taking too long, scope changed, etc.) before proposing
-   anything.
+2. If no reason was given, pose the CEO a question (see "Posing a question
+   to the CEO") asking what's driving the change (too complex, taking too
+   long, scope changed, etc.) before proposing anything -- this one has no
+   fixed menu, so in `ui_mode: true` write `pending_gate` with `options`
+   as a single placeholder like `["Provide a reason"]` and treat the whole
+   `--answer` text as the reason, rather than trying to match it against a
+   choice.
 3. Propose a revised `stage_plan`/`roster`/`max_rework_rounds`/milestone
    items. Allowed edits: drop a pending stage (mark `skipped`), re-add a
    previously skipped one, swap a role, collapse remaining stages or
@@ -327,8 +437,11 @@ via `/sdlc-pipeline replan <run-id> ["reason"]`. Same flow either way.
    against the current plan, with one line per change on what it trades
    away (e.g. "dropping qa_tirekick for milestone 3 means only code review
    catches issues before rollout").
-4. Call `AskUserQuestion` with: **Apply**, **Adjust further**, **Cancel**.
-   - **Adjust further**: go back to step 3 with the CEO's refinement.
+4. Pose this to the CEO (see "Posing a question to the CEO") with:
+   **Apply**, **Adjust further**, **Cancel**.
+   - **Adjust further**: go back to step 3 with the CEO's refinement --
+     their live follow-up reply, or the free text after "Adjust further"
+     in `--answer`.
    - **Cancel**: leave `state.json` untouched, return to wherever
      execution was (if this came from a gate, re-present that gate).
    - **Apply**: write the revised plan to `state.json`, append one entry to
