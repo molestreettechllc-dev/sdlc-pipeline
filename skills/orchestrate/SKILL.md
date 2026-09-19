@@ -94,6 +94,17 @@ Gates fire at the macro level only: `gate_plan`, `gate_designs`,
 `gate_rollout`, `gate_flag`, `gate_next_phase`. Milestones cycle under
 `gate_rollout` without their own CEO gate -- do not add one.
 
+**`gate_flag` is skipped by default.** While a project is in active
+development (no first production deploy to real users yet), feature-flag
+gates are noise: at `start`, mark `gate_flag` `skipped`. It runs only when
+the CEO asks for it -- in the `start` command's arguments or words, at any
+gate, or via a replan that re-adds it (a previously skipped stage can be
+re-added; see Replan). The PM's `ready_to_test_report` still states plainly
+whether anything is behind a flag, but no approval question follows it, so
+the run goes from `ready_to_test_report` straight to `gate_next_phase`.
+When a phase-2+ run is created from `gate_next_phase`, carry the skip
+over unless the CEO says otherwise.
+
 ## `start <prd-path-or-repo-link>`
 
 1. Determine the source type: if the argument looks like a git URL
@@ -111,7 +122,8 @@ Gates fire at the macro level only: `gate_plan`, `gate_designs`,
      `checkout_path` to that path as given.
    - Set `source.checkout_path` accordingly.
 5. Write `state.json` from the schema above: `source` set per steps 1 and
-   4, `roster` empty, every stage `pending`, `status: "in_progress"`,
+   4, `roster` empty, every stage `pending` except `gate_flag` (`skipped`, see "Stage catalog"),
+   `status: "in_progress"`,
    `ui_mode: true` if `--with-ui` was given (default `false`),
    `pending_gate: null`.
 6. Continue as `resume <run-id>` below, in the same turn.
@@ -227,7 +239,7 @@ replan section below.
 an `.html` file, not markdown -- the whole point is that the CEO looks at
 something, not just reads a gate's text summary. Whenever one of these
 feeds a gate (in "Gates" below, and at `ready_to_test_report`'s own
-handoff into `gate_flag`), actually present it, in addition to the usual
+handoff into `gate_flag`, when that gate is enabled), actually present it, in addition to the usual
 text summary:
 
 - **If the `Artifact` tool is available in this session** (it publishes
