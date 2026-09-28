@@ -1,0 +1,134 @@
+<svg width="1200" height="540" viewBox="0 0 1200 540" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The pipeline: sharpen_prd, write_plan, gate: plan, spec_ui, gate: designs, then a milestone loop of implement, code_review and qa_tirekick, then ready_to_test_report, gate: flag, gate: next phase, which either starts a new phase or ends the run.">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#152A43"/>
+    </marker>
+    <marker id="arrowAmber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#B9791E"/>
+    </marker>
+  </defs>
+
+  <style>
+    text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+    .stage rect { fill: #FFFFFF; stroke: #152A43; stroke-width: 2; }
+    .stage .title { font-size: 16px; font-weight: 700; fill: #152A43; }
+    .stage .sub { font-size: 11.5px; fill: #7A6F58; }
+    .gate rect { fill: #152A43; }
+    .gate .title { font-size: 13px; font-weight: 700; fill: #F4EFE4; }
+    .gate .sub { font-size: 10px; fill: #E2A63B; }
+    .mini rect { fill: #FBF8F2; stroke: #152A43; stroke-width: 1.5; }
+    .mini .title { font-size: 13px; font-weight: 700; fill: #152A43; }
+    .mini .sub { font-size: 9.5px; fill: #7A6F58; }
+    .flow { stroke: #152A43; stroke-width: 2.5; fill: none; marker-end: url(#arrow); }
+    .loopback { stroke: #B9791E; stroke-width: 2.5; fill: none; stroke-dasharray: 7 5; marker-end: url(#arrowAmber); }
+    .caption { font-size: 12px; fill: #B9791E; font-weight: 700; letter-spacing: .04em; }
+    .legend { font-size: 12px; fill: #7A6F58; }
+  </style>
+
+  <!-- card background -->
+  <rect x="8" y="16" width="1184" height="508" rx="28" fill="#FBF8F2" stroke="#E3D9C4" stroke-width="2"/>
+
+  <!-- Row A -->
+  <g class="stage">
+    <rect x="40" y="78" width="190" height="64" rx="14"/>
+    <text x="135" y="103" text-anchor="middle" class="title">sharpen_prd</text>
+    <text x="135" y="122" text-anchor="middle" class="sub">PM &#183; intake, roster</text>
+  </g>
+  <path class="flow" d="M230,110 H278"/>
+
+  <g class="stage">
+    <rect x="280" y="78" width="190" height="64" rx="14"/>
+    <text x="375" y="103" text-anchor="middle" class="title">write_plan</text>
+    <text x="375" y="122" text-anchor="middle" class="sub">architect &#183; design + milestones</text>
+  </g>
+  <path class="flow" d="M470,110 H508"/>
+
+  <g class="gate">
+    <rect x="510" y="88" width="150" height="44" rx="22"/>
+    <text x="585" y="106" text-anchor="middle" class="sub">GATE</text>
+    <text x="585" y="122" text-anchor="middle" class="title">plan</text>
+  </g>
+  <path class="flow" d="M660,110 H698"/>
+
+  <g class="stage">
+    <rect x="700" y="78" width="190" height="64" rx="14"/>
+    <text x="795" y="103" text-anchor="middle" class="title">spec_ui</text>
+    <text x="795" y="122" text-anchor="middle" class="sub">UX designer &#183; optional</text>
+  </g>
+  <path class="flow" d="M890,110 H928"/>
+
+  <g class="gate">
+    <rect x="930" y="88" width="150" height="44" rx="22"/>
+    <text x="1005" y="106" text-anchor="middle" class="sub">GATE</text>
+    <text x="1005" y="122" text-anchor="middle" class="title">designs</text>
+  </g>
+
+  <!-- connector down the right side -->
+  <path class="flow" d="M1005,132 V276"/>
+
+  <!-- Row B: milestone loop card -->
+  <rect x="840" y="278" width="320" height="204" rx="16" fill="#FCF1DE" stroke="#B9791E" stroke-width="2" stroke-dasharray="6 5"/>
+  <text x="856" y="266" class="caption">MILESTONE LOOP &#8212; repeats per milestone</text>
+
+  <g class="mini">
+    <rect x="862" y="306" width="122" height="42" rx="10"/>
+    <text x="923" y="326" text-anchor="middle" class="title">implement</text>
+    <text x="923" y="340" text-anchor="middle" class="sub">senior engineer</text>
+  </g>
+  <path class="flow" d="M984,327 H1000"/>
+  <g class="mini">
+    <rect x="1002" y="306" width="146" height="42" rx="10"/>
+    <text x="1075" y="326" text-anchor="middle" class="title">code_review</text>
+    <text x="1075" y="340" text-anchor="middle" class="sub">reviewer &#183; &#8804;2 rounds</text>
+  </g>
+  <path class="flow" d="M1055,348 L995,412"/>
+  <g class="mini">
+    <rect x="927" y="414" width="150" height="42" rx="10"/>
+    <text x="1002" y="434" text-anchor="middle" class="title">qa_tirekick</text>
+    <text x="1002" y="448" text-anchor="middle" class="sub">QA &#183; optional</text>
+  </g>
+  <path class="loopback" d="M927,430 C 890,420 880,380 908,348"/>
+  <text x="860" y="470" class="legend" font-style="italic">fast-follows and rework loop back to implement</text>
+
+  <path class="flow" d="M840,380 H808"/>
+
+  <g class="stage">
+    <rect x="610" y="348" width="198" height="64" rx="14"/>
+    <text x="709" y="373" text-anchor="middle" class="title">ready_to_test_report</text>
+    <text x="709" y="392" text-anchor="middle" class="sub">PM &#183; what shipped, what to test</text>
+  </g>
+  <path class="flow" d="M610,380 H582"/>
+
+  <g class="gate">
+    <rect x="422" y="358" width="160" height="44" rx="22"/>
+    <text x="502" y="376" text-anchor="middle" class="sub">GATE &#183; optional</text>
+    <text x="502" y="392" text-anchor="middle" class="title">flag</text>
+  </g>
+  <path class="flow" d="M422,380 H392"/>
+
+  <g class="gate">
+    <rect x="222" y="358" width="170" height="44" rx="22"/>
+    <text x="307" y="376" text-anchor="middle" class="sub">GATE</text>
+    <text x="307" y="392" text-anchor="middle" class="title">next phase</text>
+  </g>
+
+  <!-- loop back to the very start -->
+  <path class="loopback" d="M270,358 C 230,260 200,190 165,144"/>
+  <text x="178" y="230" class="legend" transform="rotate(-64 178 230)">start next phase</text>
+
+  <!-- end the run -->
+  <path class="flow" d="M307,402 V440"/>
+  <circle cx="307" cy="468" r="22" fill="#E2A63B"/>
+  <path d="M297,468 L304,475 L318,459" stroke="#152A43" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="345" y="474" class="legend">end the run</text>
+
+  <!-- legend -->
+  <g transform="translate(40,500)">
+    <line x1="0" y1="0" x2="30" y2="0" class="flow"/>
+    <text x="38" y="4" class="legend">flow</text>
+    <line x1="100" y1="0" x2="130" y2="0" class="loopback"/>
+    <text x="138" y="4" class="legend">rework / loop back</text>
+    <rect x="290" y="-9" width="18" height="18" rx="9" fill="#152A43"/>
+    <text x="316" y="4" class="legend">CEO approval gate</text>
+  </g>
+</svg>
