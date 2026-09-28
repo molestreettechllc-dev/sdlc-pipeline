@@ -97,14 +97,14 @@ it goes, and stops only when it needs you: at a gate, when a rework loop
 hits its cap, or when the run completes.
 
 ```
-/sdlc-pipeline resume <run-id> [--answer "<text>"]
+/sdlc-pipeline resume <run-id>
 /sdlc-pipeline replan <run-id> ["reason"]
 ```
 
 - **`resume`** continues a paused run — including one you're picking up
-  in a fresh session that has no memory of the last one. `--answer` is
-  for scripted/dashboard-driven use (see "Headless / `--with-ui` mode"
-  below); in a normal terminal you just reply to the question Claude asks.
+  in a fresh session that has no memory of the last one. At a gate, you
+  just reply to the question Claude asks, live, the same as any other
+  conversation with your agent harness.
 - **`replan`** reshapes whatever hasn't happened yet — drop a stage,
   bring back one you'd skipped, swap a role, collapse remaining
   milestones, shrink the rework-round budget. It can't rewrite what's
@@ -177,16 +177,6 @@ development (no first production deploy to real users yet) — early on,
 flag-gate approvals are just noise. It only runs if you ask for it, at
 `start` or at any gate, and a later phase inherits whatever this one
 decided unless you say otherwise.
-
-### Headless / `--with-ui` mode
-
-`start --with-ui` marks a run as dashboard-driven instead of
-terminal-driven: instead of calling an interactive question tool, the
-orchestrator writes a `pending_gate` object into the run's state file and
-ends the turn. Something else — a dashboard, a script — reads that,
-collects the answer, and calls `resume <run-id> --answer "<text>"` to
-supply it. Useful if you're driving multiple runs from outside a live
-terminal session.
 
 ## State and artifacts
 
