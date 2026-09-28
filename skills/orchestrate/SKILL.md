@@ -156,6 +156,43 @@ over unless the CEO says otherwise.
    hand each other feedback (review findings, fast-follow tickets) directly
    through state and artifacts, with no CEO round-trip in between.
 
+## Session handoff
+
+`state.json` records *what* is done; it doesn't say who was mid-task or
+why a turn stopped without reaching a gate (a rate limit, a killed
+session, a crash). Maintain `<project-root>/.sdlc/HANDOFF.md` alongside it
+for that: a short, human-and-agent-readable note that lets any session --
+this one resuming, or a different local agent the CEO starts -- pick up
+without re-deriving context from the transcript. Not committed to git
+(same as the rest of `.sdlc/`).
+
+- **On `resume`, before anything else:** if `HANDOFF.md` exists, read it.
+  If it describes an in-flight step that `state.json` doesn't show as
+  `done` (e.g. a dispatched subagent whose result never landed), that's
+  the actual next action -- redo or continue it rather than trusting
+  `state.json` alone, since a subagent can fail mid-work without the
+  orchestrator getting to update state.
+- **Write or overwrite `HANDOFF.md`** at two points: (1) right before
+  dispatching any subagent likely to run long (a milestone's `implement`,
+  `code_review`, or `qa_tirekick`; a role stage) -- note which stage/item,
+  which branch/commits exist so far, and what "done" looks like for the
+  step in flight; (2) right after a stage or milestone sub-stage finishes,
+  updating it to say what's next. Keep it current, not append-only --
+  overwrite rather than accumulate a log.
+- **Contents:** who was working and when; the run id and current stage;
+  branch name and commit hashes for any uncommitted/unmerged work, with
+  test/build results if known; the concrete next step (which subagent to
+  dispatch, with what focus, writing to what artifact path); any
+  standing constraints worth restating (what never to touch, what's
+  off-limits) so a fresh session doesn't have to rediscover them from
+  scratch; and anything about the dev environment a resuming session
+  would otherwise waste a turn rediscovering (how to start services, what
+  ports are in use, test vs. sample databases).
+- If the run completes normally (no interruption), there's nothing to
+  hand off -- leave `HANDOFF.md` as whatever it last said, or clear it to
+  a one-line "no run in flight" note; don't manufacture handoff content
+  for a clean finish.
+
 ## Progress logging
 
 You are a process manager, and the CEO is watching this turn happen live

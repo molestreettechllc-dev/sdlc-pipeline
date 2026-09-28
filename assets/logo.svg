@@ -1,0 +1,14 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Foreman logo">
+  <rect width="200" height="200" rx="42" fill="#152A43"/>
+  <!-- brim -->
+  <ellipse cx="100" cy="127" rx="50" ry="11" fill="#F4EFE4"/>
+  <!-- dome -->
+  <path d="M50,127 A50,52 0 0 1 150,127 Z" fill="#F4EFE4"/>
+  <!-- centerline seam -->
+  <path d="M100,79 Q94,104 100,127" stroke="#152A43" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <!-- hi-vis stripe -->
+  <rect x="55" y="115" width="90" height="8" rx="4" fill="#E2A63B"/>
+  <!-- approval check, bottom right -->
+  <circle cx="150" cy="150" r="22" fill="#E2A63B"/>
+  <path d="M140,150 L147,157 L161,142" stroke="#152A43" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

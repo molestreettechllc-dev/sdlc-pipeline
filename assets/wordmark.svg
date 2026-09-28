@@ -1,0 +1,10 @@
+<svg width="520" height="120" viewBox="0 0 520 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Foreman">
+  <rect x="0" y="0" width="120" height="120" rx="26" fill="#152A43"/>
+  <ellipse cx="60" cy="76" rx="30" ry="6.6" fill="#F4EFE4"/>
+  <path d="M30,76 A30,31 0 0 1 90,76 Z" fill="#F4EFE4"/>
+  <path d="M60,47 Q56,62 60,76" stroke="#152A43" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <rect x="33" y="69" width="54" height="5" rx="2.5" fill="#E2A63B"/>
+  <circle cx="90" cy="90" r="13" fill="#E2A63B"/>
+  <path d="M84,90 L88.2,94.2 L96.5,84.5" stroke="#152A43" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="146" y="76" font-family="Georgia, 'Times New Roman', serif" font-size="52" fill="#152A43">Foreman</text>
+</svg>
