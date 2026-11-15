@@ -18,7 +18,10 @@ Path: `<project-root>/.sdlc/runs/<run-id>/state.json`. Artifacts live in
 `NN_<stage-id>.md` in execution order -- except `sharpen_prd`, `write_plan`,
 `spec_ui`, and `ready_to_test_report`, which are always `.html`: anything
 the CEO is asked to approve is a presentation, not a markdown file
-rendered flat. See "Presenting an approval artifact" below.
+rendered flat. A milestone's `ui_audit` report is `.html` too (it's a
+visual audit with screenshots), written to
+`milestone-<index>_ui_audit_round<N>.html`. See "Presenting an approval
+artifact" below.
 
 Schema:
 
@@ -63,9 +66,14 @@ like:
   "implement": {"status": "pending", "rework_count": 0},
   "code_review": {"status": "pending", "round": 0, "max_rounds": 2},
   "qa_tirekick": {"status": "pending"},
+  "ui_audit": {"status": "pending"},
   "artifacts": []
 }
 ```
+
+`ui_audit` is present only when `ui_auditor` is in the roster (see "Milestone
+loop"). A run created before this role existed simply has no such block
+and behaves exactly as before.
 
 `artifacts` accumulates paths as the milestone's sub-stages run (see
 "Milestone loop" below) -- every dispatch writes one, same as a role
@@ -269,9 +277,12 @@ artifact link/path belongs in that summary too, not instead of it.
    the PM's proposal omits either, keep it in the roster anyway and note
    the override plainly in the gate summary (e.g. "PM proposed skipping
    the architect; kept because milestones require one"). `ux_designer`,
-   `code_reviewer`, and `qa_engineer` are genuinely optional -- set
-   `roster` to `["architect", "senior_engineer"]` plus whichever of those
-   three the PM included. For every stage in `stage_plan` whose `role` is
+   `code_reviewer`, `qa_engineer`, and `ui_auditor` are genuinely optional
+   -- set `roster` to `["architect", "senior_engineer"]` plus whichever of
+   those four the PM included. `ui_auditor` only makes sense for a
+   mobile (or phone-sized web) UI with something to run it on: if the PM
+   proposes it for a PRD with no UI changes, drop it and say so in the
+   gate summary. For every stage in `stage_plan` whose `role` is
    not in the final roster (and is not itself a gate or the milestone
    loop), mark it `skipped` instead of `pending`. If the PM proposed
    dropping the UX stage, designer role never gets dispatched and
@@ -347,21 +358,26 @@ summarize.
    an `implement` sub-status block always, a `code_review` block only if
    `code_reviewer` is in `roster` (otherwise omit it -- there is no round
    cap or review to run), and a `qa_tirekick` block only if `qa_engineer`
-   is in `roster`. A milestone item with neither sub-block completes as
+   is in `roster`, and a `ui_audit` block only if `ui_auditor` is in
+   `roster`. A milestone item with none of these sub-blocks completes as
    soon as `implement` finishes -- there is nothing else to gate it on.
+   Sub-stages run in the order `implement` -> `code_review` ->
+   `qa_tirekick` -> `ui_audit`; below, "the next sub-block" means the next
+   one in that order that the item actually has.
 2. Work items in order. For the first item not `done`, run its sub-loop:
    - **implement**: dispatch `senior_engineer` with the milestone spec (and
      any open fast-follow tickets from a prior QA round, if this is a
      rework pass). On completion, mark `implement.status: "done"` for this
      pass. If this item has a `code_review` block, set its status to
-     `"pending"` and continue to code_review below; otherwise, if it has a
-     `qa_tirekick` block, set that to `"pending"` instead; otherwise mark
+     `"pending"` and continue to code_review below; otherwise set the next
+     sub-block's status to `"pending"` instead; if there is none, mark
      the whole milestone item `done` and move to the next item (step 2).
    - **code_review** (only if this item has this block): dispatch
      `code_reviewer` with the current diff. Increment `code_review.round`.
      - No blocking findings: mark `code_review.status: "done"`. If this
-       item has a `qa_tirekick` block, set it to `"pending"`; otherwise
-       mark the milestone item `done` and move to the next item.
+       item has a later sub-block (`qa_tirekick`, else `ui_audit`), set it
+       to `"pending"`; otherwise mark the milestone item `done` and move
+       to the next item.
      - Blocking findings, `round < max_rounds` (2): set `implement.status:
        "pending"`, increment `implement.rework_count`, loop back to
        implement with the findings as the fast-follow input.
@@ -369,8 +385,9 @@ summarize.
        escalation (see below) -- do not loop again on your own.
    - **qa_tirekick** (only if this item has this block): dispatch
      `qa_engineer` against the reviewed diff.
-     - No bugs found: mark `qa_tirekick.status: "done"` and the whole
-       milestone item `done`; move to the next item (step 2).
+     - No bugs found: mark `qa_tirekick.status: "done"`. If this item has
+       a `ui_audit` block, set it to `"pending"`; otherwise mark the whole
+       milestone item `done` and move to the next item (step 2).
      - Bugs found, `implement.rework_count < max_rework_rounds` (run-level,
        default 3): file the fast-follow, increment
        `implement.rework_count`, and if this item has a `code_review`
@@ -381,6 +398,31 @@ summarize.
        re-verifies.
      - Bugs found, `implement.rework_count == max_rework_rounds`: rework-cap
        escalation.
+   - **ui_audit** (only if this item has this block): first decide whether
+     this milestone changes UI at all -- from the architect's milestone
+     description and the diff's file paths. If it's server-only (or
+     otherwise has no screen to look at), mark `ui_audit.status:
+     "skipped"` and treat it as done below; don't dispatch. Otherwise
+     dispatch `ui_auditor` against the running build, telling it the
+     milestone index, the `spec_ui` artifact path (if that stage ran), how
+     to launch the app, and the report path
+     (`milestone-<index>_ui_audit_round<N>.html`, `<N>` being
+     `implement.rework_count`). The auditor is read-only and scratch-data
+     only; if it reports no available simulator/emulator/browser surface,
+     mark `ui_audit` `skipped` and say so in the milestone's summary line
+     rather than blocking the run.
+     - No blocker or should-fix findings (nits don't count): mark
+       `ui_audit.status: "done"` and the whole milestone item `done`; move
+       to the next item (step 2). Carry the nits into the next
+       `ready_to_test_report` so they aren't lost.
+     - Blocker or should-fix findings, `implement.rework_count <
+       max_rework_rounds`: file them as fast-follow tickets, increment
+       `implement.rework_count`, reset `code_review.round` to 0 if present,
+       and loop back to implement. The fix goes through `code_review` (if
+       present) and then straight back to `ui_audit` -- `qa_tirekick` is
+       not re-run for a UI-only fix.
+     - Blocker or should-fix findings, `implement.rework_count ==
+       max_rework_rounds`: rework-cap escalation.
 3. Once every item is `done`, mark the `milestone_loop` stage `done` and
    continue the outer loop.
 

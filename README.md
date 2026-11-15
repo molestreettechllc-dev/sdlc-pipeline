@@ -11,7 +11,8 @@
 
 **You're the CEO.** You write the brief — or just point at a repo with no
 brief at all — and Foreman staffs the project for you: a PM, an architect,
-a UX designer, a senior engineer, a code reviewer, and a QA engineer, each
+a UX designer, a senior engineer, a code reviewer, a QA engineer, and — for
+mobile UI work — a UI auditor, each
 a real [Claude Code](https://claude.com/claude-code) subagent with its own
 job. They plan, build, review, and test each other's work, and hand off
 directly to one another — no CEO sign-off needed between an engineer and
@@ -26,7 +27,7 @@ One command runs the whole thing:
 ```
 
 It's built as an ordinary Claude Code plugin — a skill that drives the
-loop, a slash command that invokes it, six subagents it dispatches.
+loop, a slash command that invokes it, seven subagents it dispatches.
 Nothing here is a separate service or a custom harness; it's prompts and
 state files, running on top of Claude Code's own agent and skill
 primitives.
@@ -44,14 +45,14 @@ everything" or "ask me nothing."
 It's opinionated about a few things:
 
 - 🧑‍🤝‍🧑 **The crew is dynamic.** A tiny bugfix might not need a UX designer
-  or even a dedicated QA pass; a big feature might need all six roles. The
+  or even a dedicated QA pass; a big feature might need every role. The
   PM proposes who's actually needed for *this* PRD, not a fixed pipeline.
 - 🚦 **Gates are macro, not micro.** You approve the plan, the designs,
   and the rollout — not every commit. Review and QA loops between an
   engineer and a reviewer happen without you in the loop, the way they
   would on a real team.
 - 📄 **Every approval is something you can actually look at.** The PRD,
-  the technical plan, the UX spec, and the readiness report are always
+  the technical plan, the UX spec, and the readiness report (plus any UI audit report) are always
   rendered as a real page (HTML, or a published Claude Artifact when
   available) — never a wall of markdown you're expected to review by
   skimming.
@@ -73,7 +74,7 @@ It's opinionated about a few things:
 for the manifest shape if you're developing on it.)
 
 **Other harnesses** (Codex CLI, Cursor, Aider, or anything else that takes
-a system prompt): the six role prompts and the orchestrator logic are
+a system prompt): the seven role prompts and the orchestrator logic are
 plain markdown and JSON, not Claude-Code-locked — but nothing else we know
 of has Claude Code's autonomous subagent dispatch built in, so you (or a
 script) play the orchestrator by hand, one stage at a time. Full,
@@ -112,14 +113,15 @@ hits its cap, or when the run completes.
 
 ## What actually happens in a run
 
-<p align="center"><img src="assets/flow.svg" alt="Pipeline diagram: sharpen_prd leads to write_plan, gate: plan, spec_ui, gate: designs, then a milestone loop of implement, code_review and qa_tirekick repeating per milestone, then ready_to_test_report, gate: flag, gate: next phase, which either loops back to start a new phase or ends the run." width="100%"></p>
+<p align="center"><img src="assets/flow.svg" alt="Pipeline diagram: sharpen_prd leads to write_plan, gate: plan, spec_ui, gate: designs, then a milestone loop of implement, code_review, qa_tirekick and ui_audit repeating per milestone, then ready_to_test_report, gate: flag, gate: next phase, which either loops back to start a new phase or ends the run." width="100%"></p>
 
 1. **`sharpen_prd`** (PM) — turns a raw brief into a buildable spec, *or*,
    given only a repo with no brief, recons the codebase and drafts a PRD
    from scratch (current-state summary plus a proposed expansion). Also
    proposes the crew: architect and senior engineer are always staffed
    (no plan or code without them), UX designer / code reviewer / QA
-   engineer are genuinely optional depending on what the work needs.
+   engineer / UI auditor are genuinely optional depending on what the work
+   needs.
 2. **`write_plan`** (architect) — a system design and a milestone-by-
    milestone build plan, grounded in what's actually in the repo, never
    invented conventions or dependencies.
@@ -137,6 +139,12 @@ hits its cap, or when the run completes.
    - **`qa_tirekick`** (QA engineer, if staffed) — exercises the *running*
      feature, not just the diff; files fast-follow bugs that loop back to
      `implement`.
+   - **`ui_audit`** (UI auditor, if staffed, UI milestones only) — looks at
+     the *running* app in a simulator, emulator, or phone-sized browser
+     against the UX spec: touch targets, safe areas, Dynamic Type,
+     contrast, screen-reader labels, dark mode, small screens. Screenshot
+     evidence, prioritized findings, never edits code; blockers and
+     should-fixes loop back to `implement`.
    - This repeats milestone by milestone with no CEO round-trip in
      between — findings and fast-follow tickets pass directly from one
      role to the next through the run's state and artifacts, the way a
@@ -165,9 +173,10 @@ stop the run.
 | 👷 **Senior engineer** | `implement` | Tickets + code + tests, one milestone at a time, and applies fast-follow fixes. Always staffed. |
 | 🔍 **Code reviewer** | `code_review` | Read-only review of the diff; never edits code itself. Optional, max 2 rounds per milestone. |
 | 🧪 **QA engineer** | `qa_tirekick` | Smoke-tests the running feature end to end; files bugs, doesn't fix them. Optional. |
+| 📱 **UI auditor** | `ui_audit` | Audits the running mobile UI against the spec and mobile design quality, with screenshots; read-only, scratch accounts only. Optional, proposed only for UI work. |
 
 Each is a plain Claude Code subagent defined in [`agents/`](agents/), with
-its own scoped tool access (reviewers and QA are read-only plus Bash for
+its own scoped tool access (reviewers, QA, and the UI auditor are read-only plus Bash for
 running things — they can't edit code even by accident).
 
 ### Feature flags
@@ -193,6 +202,7 @@ project:
     milestone-1_implement_round1.md
     milestone-1_code_review_round1.md
     milestone-1_qa_tirekick.md
+    milestone-1_ui_audit_round0.html
     ...
     05_ready_to_test_report.html
 ```

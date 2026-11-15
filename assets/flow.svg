@@ -1,4 +1,4 @@
-<svg width="1200" height="540" viewBox="0 0 1200 540" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The pipeline: sharpen_prd, write_plan, gate: plan, spec_ui, gate: designs, then a milestone loop of implement, code_review and qa_tirekick, then ready_to_test_report, gate: flag, gate: next phase, which either starts a new phase or ends the run.">
+<svg width="1200" height="540" viewBox="0 0 1200 540" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The pipeline: sharpen_prd, write_plan, gate: plan, spec_ui, gate: designs, then a milestone loop of implement, code_review, qa_tirekick and ui_audit, then ready_to_test_report, gate: flag, gate: next phase, which either starts a new phase or ends the run.">
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#152A43"/>
@@ -81,13 +81,19 @@
     <text x="1075" y="326" text-anchor="middle" class="title">code_review</text>
     <text x="1075" y="340" text-anchor="middle" class="sub">reviewer &#183; &#8804;2 rounds</text>
   </g>
-  <path class="flow" d="M1055,348 L995,412"/>
+  <path class="flow" d="M1040,348 L960,412"/>
   <g class="mini">
-    <rect x="927" y="414" width="150" height="42" rx="10"/>
-    <text x="1002" y="434" text-anchor="middle" class="title">qa_tirekick</text>
-    <text x="1002" y="448" text-anchor="middle" class="sub">QA &#183; optional</text>
+    <rect x="862" y="414" width="130" height="42" rx="10"/>
+    <text x="927" y="434" text-anchor="middle" class="title">qa_tirekick</text>
+    <text x="927" y="448" text-anchor="middle" class="sub">QA &#183; optional</text>
   </g>
-  <path class="loopback" d="M927,430 C 890,420 880,380 908,348"/>
+  <path class="flow" d="M992,435 H1006"/>
+  <g class="mini">
+    <rect x="1008" y="414" width="140" height="42" rx="10"/>
+    <text x="1078" y="434" text-anchor="middle" class="title">ui_audit</text>
+    <text x="1078" y="448" text-anchor="middle" class="sub">UI auditor &#183; UI only</text>
+  </g>
+  <path class="loopback" d="M880,414 C 872,392 888,368 898,350"/>
   <text x="860" y="470" class="legend" font-style="italic">fast-follows and rework loop back to implement</text>
 
   <path class="flow" d="M840,380 H808"/>

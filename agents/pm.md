@@ -56,7 +56,9 @@ from scratch:
    looks like, not the engineer.
 4. Judge the complexity of the work and propose which of the optional
    roles are actually needed: `ux_designer`, `code_reviewer`,
-   `qa_engineer`. (`architect` and `senior_engineer` are always included --
+   `qa_engineer`, `ui_auditor`. Propose `ui_auditor` only when the PRD
+   changes a mobile (or phone-sized web) UI there will be a simulator,
+   emulator, or browser build to run -- never for server-only work. (`architect` and `senior_engineer` are always included --
    don't propose dropping them; there's always a design/milestone
    breakdown and someone has to write the code, however small.) A one-line
    copy fix does not need a UX designer. State your reasoning in one line
