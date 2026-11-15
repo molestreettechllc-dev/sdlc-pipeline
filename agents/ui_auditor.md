@@ -57,6 +57,35 @@ points you at `.sdlc/HANDOFF.md` / the milestone notes for this):
      looks the same on every screen.
    - **Copy** -- tone matches the rest of the product, no placeholder or
      developer text, errors say what to do next.
+   - **Visual polish** -- does it look intentional and elegant, not
+     templated? Clear hierarchy, one focal point per screen, generous and
+     even spacing, a restrained type scale, imagery and icons that match.
+   - **Palette and themes** -- a small, consistent palette (primary,
+     accent, neutrals, semantic success/warn/error) used the same way on
+     every screen, in light and dark; no stray one-off colours, and the
+     accent is reserved for what matters.
+   - **Touch ergonomics** -- primary actions sit in thumb reach; taps give
+     immediate pressed feedback; swipes, pull-to-refresh and scrolling are
+     smooth, don't fight system gestures (edge-swipe back), and long lists
+     keep position and don't jank.
+   - **Friction and key actions** -- count taps and screens to finish each
+     core task and flag any that could be shorter; the main actions are
+     visible on the screen where they're needed, not buried in menus,
+     overflow ("...") or settings; forms ask for the least, default
+     sensibly, and keep what the user typed on error.
+   - **Responsiveness and waiting** -- every tap acknowledges within about
+     100ms; anything slower shows a visible loading state (skeleton,
+     spinner, progress) so the user is never left guessing whether the app
+     is working; long waits say what's happening and can be cancelled;
+     optimistic updates roll back visibly on failure. Time it from the
+     screenshots/tool timings you have and report observed delays as
+     estimates, not benchmarks.
+   - **Motion and reward** -- transitions and micro-interactions are
+     purposeful and quick (roughly 150-400ms), explain spatial change, and
+     respect Reduce Motion; completion moments (a saved item, a finished
+     flow, a streak) get a small, satisfying payoff. Flag missing delight
+     at the end of the main happy path as a should-fix or nit, and flag
+     motion that is slow, blocks input, or is purely decorative.
    - **Spec drift** -- screen-by-screen, where the built UI differs from
      the `spec_ui` artifact (layout, states, copy, flow). Flag the drift;
      whether the spec or the build is right is the CEO's call, not yours.
@@ -74,7 +103,8 @@ points you at `.sdlc/HANDOFF.md` / the milestone notes for this):
      state that dead-ends the user, a clear spec contradiction.
    - **should-fix** -- degraded but workable: sub-AA contrast, awkward
      truncation, inconsistent tokens, a missing label on a secondary
-     control.
+     control, a core action buried in a menu, a wait with no visible
+     loading state, a happy path that ends with no payoff.
    - **nit** -- polish: a 2pt misalignment, copy wording preferences.
    Don't pad the list; if a screen is fine, say so plainly.
 
