@@ -12,7 +12,7 @@
 **You're the CEO.** You write the brief — or just point at a repo with no
 brief at all — and Foreman staffs the project for you: a PM, an architect,
 a UX designer, a senior engineer, a code reviewer, a QA engineer, and — for
-mobile UI work — a UI auditor, each
+mobile UI work — a UI auditor and a UI beautifier, each
 a real [Claude Code](https://claude.com/claude-code) subagent with its own
 job. They plan, build, review, and test each other's work, and hand off
 directly to one another — no CEO sign-off needed between an engineer and
@@ -27,7 +27,7 @@ One command runs the whole thing:
 ```
 
 It's built as an ordinary Claude Code plugin — a skill that drives the
-loop, a slash command that invokes it, seven subagents it dispatches.
+loop, a slash command that invokes it, eight subagents it dispatches.
 Nothing here is a separate service or a custom harness; it's prompts and
 state files, running on top of Claude Code's own agent and skill
 primitives.
@@ -74,7 +74,7 @@ It's opinionated about a few things:
 for the manifest shape if you're developing on it.)
 
 **Other harnesses** (Codex CLI, Cursor, Aider, or anything else that takes
-a system prompt): the seven role prompts and the orchestrator logic are
+a system prompt): the eight role prompts and the orchestrator logic are
 plain markdown and JSON, not Claude-Code-locked — but nothing else we know
 of has Claude Code's autonomous subagent dispatch built in, so you (or a
 script) play the orchestrator by hand, one stage at a time. Full,
@@ -113,14 +113,14 @@ hits its cap, or when the run completes.
 
 ## What actually happens in a run
 
-<p align="center"><img src="assets/flow.svg" alt="Pipeline diagram: sharpen_prd leads to write_plan, gate: plan, spec_ui, review_designs, gate: designs, then a milestone loop of implement, code_review, qa_tirekick and ui_audit repeating per milestone, then ready_to_test_report, gate: flag, gate: next phase, which either loops back to start a new phase or ends the run." width="100%"></p>
+<p align="center"><img src="assets/flow.svg" alt="Pipeline diagram: sharpen_prd leads to write_plan, gate: plan, spec_ui, review_designs, beautify_ui, gate: designs, then a milestone loop of implement, code_review, qa_tirekick and ui_audit repeating per milestone, then ready_to_test_report, gate: flag, gate: next phase, which either loops back to start a new phase or ends the run." width="100%"></p>
 
 1. **`sharpen_prd`** (PM) — turns a raw brief into a buildable spec, *or*,
    given only a repo with no brief, recons the codebase and drafts a PRD
    from scratch (current-state summary plus a proposed expansion). Also
    proposes the crew: architect and senior engineer are always staffed
    (no plan or code without them), UX designer / code reviewer / QA
-   engineer / UI auditor are genuinely optional depending on what the work
+   engineer / UI auditor / UI beautifier are genuinely optional depending on what the work
    needs.
 2. **`write_plan`** (architect) — a system design and a milestone-by-
    milestone build plan, grounded in what's actually in the repo, never
@@ -132,7 +132,13 @@ hits its cap, or when the run completes.
 5. **`review_designs`** (UI auditor, if staffed with the designer) —
    reviews the proposed designs for polish, palette, friction, and missing
    states before you see them; the report goes back to the designer for up to 2 iterations.
-   **`gate_designs`** — same four options, for the designs.
+   **`beautify_ui`** (UI beautifier, if staffed) — first asks you which
+   direction to design from: build on the current design language, a fresh
+   direction, or both side by side (and which screens to mock). Then
+   proposes three directions as phone-width mocks — palette, type, shape,
+   spacing — and never touches app code. You pick one at
+   **`gate_designs`**; the engineer applies it and the UI auditor checks
+   the build against it. — same four options, for the designs.
 6. **Milestone loop** — for each milestone, in order:
    - **`implement`** (senior engineer) — breaks it into tickets, builds
      it, writes tests.
@@ -180,10 +186,12 @@ stop the run.
 | 🔍 **Code reviewer** | `code_review` | Read-only review of the diff; never edits code itself. Optional, max 2 rounds per milestone. |
 | 🧪 **QA engineer** | `qa_tirekick` | Smoke-tests the running feature end to end; files bugs, doesn't fix them. Optional. |
 | 📱 **UI auditor** | `ui_audit` | Audits the running mobile UI against the spec and mobile design quality, with screenshots; read-only, scratch accounts only. Optional, proposed only for UI work. |
+| 🪄 **UI beautifier** | `beautify_ui` | The auditor's creative counterpart: asks whether to evolve the current look, go fresh, or both, then proposes directions as mocks. Proposals only; the engineer builds the approved one. Optional, proposed only for UI work. |
 
 Each is a plain Claude Code subagent defined in [`agents/`](agents/), with
 its own scoped tool access (reviewers, QA, and the UI auditor are read-only plus Bash for
-running things — they can't edit code even by accident).
+running things — they can't edit code even by accident; the UI beautifier
+only writes its own mocks).
 
 ### Feature flags
 
@@ -205,6 +213,7 @@ project:
     01_sharpen_prd.html
     02_write_plan.html
     03_spec_ui.html
+    04_beautify_ui.html
     milestone-1_implement_round1.md
     milestone-1_code_review_round1.md
     milestone-1_qa_tirekick.md
@@ -215,8 +224,8 @@ project:
 
 `state.json` is the single source of truth — a fresh session can `resume`
 a run with zero prior context because everything it needs is on disk, not
-in conversation history. The four CEO-facing artifacts (`sharpen_prd`,
-`write_plan`, `spec_ui`, `ready_to_test_report`) are always rendered as
+in conversation history. The CEO-facing artifacts (`sharpen_prd`,
+`write_plan`, `spec_ui`, `beautify_ui`, `ready_to_test_report`) are always rendered as
 real HTML pages, published as a Claude Artifact when that's available in
 the session — you're always looking at something, never asked to approve
 a summary of a summary.
