@@ -141,10 +141,13 @@ hits its cap, or when the run completes.
      `implement`.
    - **`ui_audit`** (UI auditor, if staffed, UI milestones only) — looks at
      the *running* app in a simulator, emulator, or phone-sized browser
-     against the UX spec: touch targets, safe areas, Dynamic Type,
-     contrast, screen-reader labels, dark mode, small screens. Screenshot
-     evidence, prioritized findings, never edits code; blockers and
-     should-fixes loop back to `implement`.
+     against the UX spec and how it feels to use: visual polish and palette
+     consistency, tap/swipe/scroll ergonomics, friction and buried
+     actions, responsiveness and visible loading states, motion and
+     reward moments, plus touch targets, safe areas, Dynamic Type,
+     contrast, screen-reader labels, dark mode, small screens. Scorecard,
+     screenshot evidence, prioritized findings, never edits code; blockers
+     and should-fixes loop back to `implement`.
    - This repeats milestone by milestone with no CEO round-trip in
      between — findings and fast-follow tickets pass directly from one
      role to the next through the run's state and artifacts, the way a

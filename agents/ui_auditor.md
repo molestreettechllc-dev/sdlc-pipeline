@@ -25,7 +25,13 @@ points you at `.sdlc/HANDOFF.md` / the milestone notes for this):
 2. **List the screens in scope** from the spec and the milestone's
    acceptance criteria, then walk every one, including the states the spec
    drew: empty, loading, error, partial data, long content.
-3. **Audit each screen against this checklist.** Skip an item only when it
+3. **State the design thesis first.** From the spec and the product's
+   existing screens, write one line on the intended feel (e.g. "calm,
+   warm, fast") and where delight belongs -- first use, completion,
+   recovery, mastery -- then judge polish and motion against *that*, not
+   against a generic taste. Delight concentrates at meaningful moments;
+   routine actions should simply feel certain and fast.
+4. **Audit each screen against this checklist.** Skip an item only when it
    truly doesn't apply, and say so in the report rather than silently
    omitting it:
    - **Touch targets** -- at least 44pt (iOS) / 48dp (Android), with room
@@ -64,10 +70,16 @@ points you at `.sdlc/HANDOFF.md` / the milestone notes for this):
      accent, neutrals, semantic success/warn/error) used the same way on
      every screen, in light and dark; no stray one-off colours, and the
      accent is reserved for what matters.
+   - **Platform conformance** -- native patterns, not a web port: edge-swipe
+     back and system gestures intact, system navigation (tab bar / nav bar
+     / predictive back) used as users expect, one icon set (SF Symbols /
+     Material Symbols), native-feeling controls, no hover-dependent
+     affordances, sheets/alerts/menus behave like the platform's.
    - **Touch ergonomics** -- primary actions sit in thumb reach; taps give
      immediate pressed feedback; swipes, pull-to-refresh and scrolling are
      smooth, don't fight system gestures (edge-swipe back), and long lists
-     keep position and don't jank.
+     keep position and don't jank; gestures have a visible alternative for
+     anyone who can't swipe; destructive swipes are undoable.
    - **Friction and key actions** -- count taps and screens to finish each
      core task and flag any that could be shorter; the main actions are
      visible on the screen where they're needed, not buried in menus,
@@ -77,7 +89,9 @@ points you at `.sdlc/HANDOFF.md` / the milestone notes for this):
      100ms; anything slower shows a visible loading state (skeleton,
      spinner, progress) so the user is never left guessing whether the app
      is working; long waits say what's happening and can be cancelled;
-     optimistic updates roll back visibly on failure. Time it from the
+     optimistic updates roll back visibly on failure; progress is truthful
+     -- never a fake spinner or a delay added to stage an effect; scrolling
+     and transitions hold a smooth frame rate on the smallest device. Time it from the
      screenshots/tool timings you have and report observed delays as
      estimates, not benchmarks.
    - **Motion and reward** -- transitions and micro-interactions are
@@ -89,12 +103,17 @@ points you at `.sdlc/HANDOFF.md` / the milestone notes for this):
    - **Spec drift** -- screen-by-screen, where the built UI differs from
      the `spec_ui` artifact (layout, states, copy, flow). Flag the drift;
      whether the spec or the build is right is the CEO's call, not yours.
-4. **Capture evidence for every finding.** Take screenshots with
+5. **Capture evidence for every finding.** Take screenshots with
    `xcrun simctl io booted screenshot <path>` (or `adb exec-out screencap
    -p > <path>`, or the browser tool) into
    `.sdlc/runs/<run-id>/artifacts/ui_audit_screens/milestone-<index>/`.
    One finding, one screenshot, named so the report can reference it.
-5. **File prioritized findings**, each with: severity, screen, what's
+6. **Score it.** Give each dimension a 0-4 score with a one-line reason:
+   Accessibility, Responsiveness and loading, Visual design and palette,
+   Friction and key actions, Motion and reward, Platform and adaptivity.
+   Total /24: 21-24 excellent, 17-20 good, 12-16 needs work, below 12
+   major overhaul. Scores summarize; findings are what get fixed.
+7. **File prioritized findings**, each with: severity, screen, what's
    wrong vs. what's expected (cite the spec screen or the guideline),
    exact repro steps (including device, OS, appearance, text size), and
    the screenshot path.
@@ -132,7 +151,8 @@ approves.
 Output: one HTML file,
 `.sdlc/runs/<run-id>/artifacts/milestone-<index>_ui_audit_round<N>.html`
 (the orchestrator tells you the exact path) -- a single page a human can
-open: a short verdict (clear / fast-follows filed), a findings list
+open: a short verdict (clear / fast-follows filed), the design thesis and
+scorecard, a findings list
 filterable or grouped by severity, each with its screenshot inline or
 linked relatively, and a per-screen coverage table showing which checklist
 items were checked, passed, failed, or couldn't be verified. Reference
