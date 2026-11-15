@@ -39,7 +39,7 @@ Schema:
     {"id": "write_plan", "role": "architect", "status": "pending", "artifact": null},
     {"id": "gate_plan", "type": "gate", "status": "pending"},
     {"id": "spec_ui", "role": "ux_designer", "status": "pending", "artifact": null},
-    {"id": "review_designs", "role": "ui_auditor", "status": "pending", "artifact": null},
+    {"id": "review_designs", "role": "ui_auditor", "status": "pending", "artifact": null, "iterations": 0, "max_iterations": 2},
     {"id": "gate_designs", "type": "gate", "status": "pending"},
     {"id": "milestones", "type": "milestone_loop", "status": "pending", "items": []},
     {"id": "gate_rollout", "type": "gate", "status": "pending"},
@@ -67,7 +67,7 @@ like:
   "implement": {"status": "pending", "rework_count": 0},
   "code_review": {"status": "pending", "round": 0, "max_rounds": 2},
   "qa_tirekick": {"status": "pending"},
-  "ui_audit": {"status": "pending"},
+  "ui_audit": {"status": "pending", "iterations": 0, "max_iterations": 2},
   "artifacts": []
 }
 ```
@@ -272,10 +272,11 @@ artifact link/path belongs in that summary too, not instead of it.
    before the question arrives.
 4. Special case, `review_designs`: dispatch `ui_auditor` in design-review
    mode with the `spec_ui` artifact path. If it files blockers or
-   should-fixes, send them to `ux_designer` as one revision pass (re-run
-   `spec_ui` with the findings, then `review_designs` once more); whatever
-   is still open after that goes into the `gate_designs` summary rather
-   than looping again. This stage runs before `gate_designs` so the CEO
+   should-fixes, its report goes back to `ux_designer` (re-run `spec_ui`
+   with the report's path as input), then `review_designs` re-checks;
+   each such pass increments `iterations`, up to `max_iterations` (2).
+   Whatever is still open after the second iteration goes into the
+   `gate_designs` summary for the CEO rather than looping again. This stage runs before `gate_designs` so the CEO
    reviews audited designs, with the auditor's verdict shown alongside.
 5. Special case, `sharpen_prd` only: the PM's artifact includes a proposed
    roster and stage list. `architect` and `senior_engineer` are always in
@@ -416,7 +417,7 @@ summarize.
      milestone index, the `spec_ui` artifact path (if that stage ran), how
      to launch the app, and the report path
      (`milestone-<index>_ui_audit_round<N>.html`, `<N>` being
-     `implement.rework_count`). The auditor is read-only and scratch-data
+     `ui_audit.iterations`). The auditor is read-only and scratch-data
      only; if it reports no available simulator/emulator/browser surface,
      mark `ui_audit` `skipped` and say so in the milestone's summary line
      rather than blocking the run.
@@ -424,14 +425,16 @@ summarize.
        `ui_audit.status: "done"` and the whole milestone item `done`; move
        to the next item (step 2). Carry the nits into the next
        `ready_to_test_report` so they aren't lost.
-     - Blocker or should-fix findings, `implement.rework_count <
-       max_rework_rounds`: file them as fast-follow tickets, increment
-       `implement.rework_count`, reset `code_review.round` to 0 if present,
-       and loop back to implement. The fix goes through `code_review` (if
+     - Blocker or should-fix findings, `ui_audit.iterations <
+       max_iterations` (2): send the audit report back to `senior_engineer`
+       as fast-follow tickets (the report's path is the input), increment
+       `ui_audit.iterations` (this cap is separate from `rework_count`),
+       reset `code_review.round` to 0 if present, and loop back to
+       implement. The fix goes through `code_review` (if
        present) and then straight back to `ui_audit` -- `qa_tirekick` is
        not re-run for a UI-only fix.
-     - Blocker or should-fix findings, `implement.rework_count ==
-       max_rework_rounds`: rework-cap escalation.
+     - Blocker or should-fix findings, `ui_audit.iterations ==
+       max_iterations`: rework-cap escalation.
 3. Once every item is `done`, mark the `milestone_loop` stage `done` and
    continue the outer loop.
 

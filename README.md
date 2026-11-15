@@ -131,7 +131,7 @@ hits its cap, or when the run completes.
    UI mocks, built from the PRD and the plan.
 5. **`review_designs`** (UI auditor, if staffed with the designer) —
    reviews the proposed designs for polish, palette, friction, and missing
-   states before you see them; findings go back to the designer once.
+   states before you see them; the report goes back to the designer for up to 2 iterations.
    **`gate_designs`** — same four options, for the designs.
 6. **Milestone loop** — for each milestone, in order:
    - **`implement`** (senior engineer) — breaks it into tickets, builds
@@ -150,7 +150,7 @@ hits its cap, or when the run completes.
      reward moments, plus touch targets, safe areas, Dynamic Type,
      contrast, screen-reader labels, dark mode, small screens. Scorecard,
      screenshot evidence, prioritized findings, never edits code; blockers
-     and should-fixes loop back to `implement`.
+     and should-fixes go back to the engineer for up to 2 iterations.
    - This repeats milestone by milestone with no CEO round-trip in
      between — findings and fast-follow tickets pass directly from one
      role to the next through the run's state and artifacts, the way a
