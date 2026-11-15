@@ -16,7 +16,7 @@ session with no memory of this one.
 Path: `<project-root>/.sdlc/runs/<run-id>/state.json`. Artifacts live in
 `<project-root>/.sdlc/runs/<run-id>/artifacts/`, named
 `NN_<stage-id>.md` in execution order -- except `sharpen_prd`, `write_plan`,
-`spec_ui`, and `ready_to_test_report`, which are always `.html`: anything
+`spec_ui`, `review_designs`, and `ready_to_test_report`, which are always `.html`: anything
 the CEO is asked to approve is a presentation, not a markdown file
 rendered flat. A milestone's `ui_audit` report is `.html` too (it's a
 visual audit with screenshots), written to
@@ -39,6 +39,7 @@ Schema:
     {"id": "write_plan", "role": "architect", "status": "pending", "artifact": null},
     {"id": "gate_plan", "type": "gate", "status": "pending"},
     {"id": "spec_ui", "role": "ux_designer", "status": "pending", "artifact": null},
+    {"id": "review_designs", "role": "ui_auditor", "status": "pending", "artifact": null},
     {"id": "gate_designs", "type": "gate", "status": "pending"},
     {"id": "milestones", "type": "milestone_loop", "status": "pending", "items": []},
     {"id": "gate_rollout", "type": "gate", "status": "pending"},
@@ -137,7 +138,7 @@ over unless the CEO says otherwise.
    summary of the whole run, and stop.
 3. Dispatch on that stage's type:
    - **role stage** (`sharpen_prd`, `write_plan`, `spec_ui`,
-     `ready_to_test_report`): see "Running a role stage" below.
+     `review_designs`, `ready_to_test_report`): see "Running a role stage" below.
    - **gate**: see "Gates" below.
    - **milestone_loop**: see "Milestone loop" below.
 4. After handling one stage, loop back to step 2 -- keep going in the same
@@ -269,7 +270,14 @@ artifact link/path belongs in that summary too, not instead of it.
    "Presenting an approval artifact" above -- don't wait until the gate
    that reviews it to surface the link, so the CEO has time to open it
    before the question arrives.
-4. Special case, `sharpen_prd` only: the PM's artifact includes a proposed
+4. Special case, `review_designs`: dispatch `ui_auditor` in design-review
+   mode with the `spec_ui` artifact path. If it files blockers or
+   should-fixes, send them to `ux_designer` as one revision pass (re-run
+   `spec_ui` with the findings, then `review_designs` once more); whatever
+   is still open after that goes into the `gate_designs` summary rather
+   than looping again. This stage runs before `gate_designs` so the CEO
+   reviews audited designs, with the auditor's verdict shown alongside.
+5. Special case, `sharpen_prd` only: the PM's artifact includes a proposed
    roster and stage list. `architect` and `senior_engineer` are always in
    the roster regardless of what the PM proposes -- `write_plan` is what
    produces the milestone list the whole `milestone_loop` depends on, and
@@ -279,7 +287,8 @@ artifact link/path belongs in that summary too, not instead of it.
    the architect; kept because milestones require one"). `ux_designer`,
    `code_reviewer`, `qa_engineer`, and `ui_auditor` are genuinely optional
    -- set `roster` to `["architect", "senior_engineer"]` plus whichever of
-   those four the PM included. `ui_auditor` only makes sense for a
+   those four the PM included. `review_designs` needs both `ux_designer`
+   and `ui_auditor`; mark it `skipped` if either is missing. `ui_auditor` only makes sense for a
    mobile (or phone-sized web) UI with something to run it on: if the PM
    proposes it for a PRD with no UI changes, drop it and say so in the
    gate summary. For every stage in `stage_plan` whose `role` is

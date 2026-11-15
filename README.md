@@ -129,7 +129,10 @@ hits its cap, or when the run completes.
    pipeline, or stop.
 4. **`spec_ui`** (UX designer, if staffed) — end-to-end user journeys and
    UI mocks, built from the PRD and the plan.
-5. **`gate_designs`** — same four options, for the designs.
+5. **`review_designs`** (UI auditor, if staffed with the designer) —
+   reviews the proposed designs for polish, palette, friction, and missing
+   states before you see them; findings go back to the designer once.
+   **`gate_designs`** — same four options, for the designs.
 6. **Milestone loop** — for each milestone, in order:
    - **`implement`** (senior engineer) — breaks it into tickets, builds
      it, writes tests.
