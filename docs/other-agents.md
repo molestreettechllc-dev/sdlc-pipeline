@@ -1,6 +1,6 @@
 # Running Foreman outside Claude Code
 
-**The short, honest version:** the *content* here — seven role prompts, a
+**The short, honest version:** the *content* here — eight role prompts, a
 state-machine spec, a JSON schema for run state — is plain markdown and
 JSON, not Claude-Code-specific in what it says. But the thing that makes a
 run *autonomous* (one command kicks off PM → architect → UX → engineer →
@@ -12,7 +12,7 @@ script you write — play the part of the orchestrator.** Each stage still
 runs as a normal single-agent session; you're the one deciding "what's
 next" and starting it, instead of the plugin deciding for you.
 
-That's still genuinely useful — you get seven carefully-written role prompts
+That's still genuinely useful — you get eight carefully-written role prompts
 and a state machine that's been exercised on real multi-milestone builds —
 just not a one-command install.
 
@@ -20,7 +20,7 @@ just not a one-command install.
 
 | File | What it is | How to use it elsewhere |
 |---|---|---|
-| [`agents/pm.md`](../agents/pm.md), [`architect.md`](../agents/architect.md), [`ux_designer.md`](../agents/ux_designer.md), [`senior_engineer.md`](../agents/senior_engineer.md), [`code_reviewer.md`](../agents/code_reviewer.md), [`qa_engineer.md`](../agents/qa_engineer.md), [`ui_auditor.md`](../agents/ui_auditor.md) | One role's full system prompt + stage instructions | Paste the body (skip the Claude-Code-specific YAML frontmatter) as your other tool's system/instructions for that one session. |
+| [`agents/pm.md`](../agents/pm.md), [`architect.md`](../agents/architect.md), [`ux_designer.md`](../agents/ux_designer.md), [`senior_engineer.md`](../agents/senior_engineer.md), [`code_reviewer.md`](../agents/code_reviewer.md), [`qa_engineer.md`](../agents/qa_engineer.md), [`ui_auditor.md`](../agents/ui_auditor.md), [`ui_beautifier.md`](../agents/ui_beautifier.md) | One role's full system prompt + stage instructions | Paste the body (skip the Claude-Code-specific YAML frontmatter) as your other tool's system/instructions for that one session. |
 | [`skills/orchestrate/SKILL.md`](../skills/orchestrate/SKILL.md) | The whole state machine: stage order, gates, milestone loop, replans, escalations | Your reference for *when* to run which role and how to read/update `state.json` between stages — you execute this logic yourself, turn by turn. |
 | `.sdlc/runs/<run-id>/state.json` + `artifacts/` | The run's entire memory | Same schema, same files, whatever harness wrote them — this is what makes resuming across tools/sessions possible at all. |
 
@@ -34,7 +34,7 @@ subagent dispatch, so this is a manual loop:
 
 1. For each role, copy that role's `agents/<role>.md` body (drop the
    frontmatter) into Codex's custom-prompts location as its own file —
-   e.g. a prompt named `sdlc-pm`, `sdlc-architect`, and so on for all seven.
+   e.g. a prompt named `sdlc-pm`, `sdlc-architect`, and so on for all eight.
 2. Keep `.sdlc/runs/<run-id>/state.json` and `artifacts/` in your repo,
    same layout as above — this is what lets Codex sessions hand off to
    each other (and to a Claude Code session, if you switch tools mid-run).
@@ -77,6 +77,16 @@ web build. If your tool can't take screenshots, skip the stage rather than
 audit from the code. Same rules apply: scratch accounts only, no edits to
 app code, report written to the run's `artifacts/`. Its findings are
 fast-follow tickets for the engineer's next session, same as QA's.
+
+### The UI beautifier outside Claude Code
+
+`ui_beautifier` expects the Step 0 answers in its prompt, because a plain
+session has nobody to ask mid-stage: before running it, decide the mode
+(build on the current design language, a fresh direction, or both side by
+side), the screens to mock (default the 3-5 most-used), and the format
+(default HTML at phone width), and put them in the prompt. It writes mocks
+only. Pick a direction yourself, then run it once more to write the tokens
+file and hand that to the engineer session.
 
 ## Any other agent (Cursor, Aider, Cline, Windsurf, a plain chat session, …)
 
