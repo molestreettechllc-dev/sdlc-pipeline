@@ -113,7 +113,7 @@ hits its cap, or when the run completes.
 
 ## What actually happens in a run
 
-<p align="center"><img src="assets/flow.svg" alt="Pipeline diagram: sharpen_prd leads to write_plan, gate: plan, spec_ui, gate: designs, then a milestone loop of implement, code_review, qa_tirekick and ui_audit repeating per milestone, then ready_to_test_report, gate: flag, gate: next phase, which either loops back to start a new phase or ends the run." width="100%"></p>
+<p align="center"><img src="assets/flow.svg" alt="Pipeline diagram: sharpen_prd leads to write_plan, gate: plan, spec_ui, review_designs, gate: designs, then a milestone loop of implement, code_review, qa_tirekick and ui_audit repeating per milestone, then ready_to_test_report, gate: flag, gate: next phase, which either loops back to start a new phase or ends the run." width="100%"></p>
 
 1. **`sharpen_prd`** (PM) — turns a raw brief into a buildable spec, *or*,
    given only a repo with no brief, recons the codebase and drafts a PRD
